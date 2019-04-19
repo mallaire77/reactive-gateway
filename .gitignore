@@ -1,0 +1,6 @@
+.idea/
+*/buildinfo.properties
+*/target
+*/project
+buildinfo.properties
+target/
