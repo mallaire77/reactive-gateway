@@ -1,5 +1,19 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.yoppworks.rxgateway.api";
+option java_outer_classname = "ShapeService";
+
+package com.yoppworks.rxgateway.api;
+
 message RequestShapes {
   uint32 numberOfShapes = 1;
+}
+
+message Color {
+  int32 red = 1;
+  int32 green = 2;
+  int32 blue = 3;
 }
 
 message AShapeToDraw {
@@ -15,9 +29,9 @@ message OnePiece {
   AShapeToDraw shape = 1;
   uint32 x_coordinate = 2;
   float rotation = 3;
-  boolean animate = 4;
+  bool animate = 4;
 }
 
-service Greeter {
+service ShapeService {
   rpc requestShapesToDraw (RequestShapes) returns (stream OnePiece) {}
 }

@@ -3,7 +3,8 @@ val commonSettings = Seq(
   startYear  := Some(2019),
   developerUrl := url("http://gitlab.com/yoppworks/reactive-gateway/"),
   titleForDocs := "Reactive Gateway",
-  codePackage := "com.yoppworks.rxgateway"
+  codePackage := "com.yoppworks.rxgateway",
+  warningsAreErrors := false
 )
 
 lazy val api = (project in file("api"))
@@ -26,3 +27,7 @@ lazy val mobile = (project in file("mobile"))
   .enablePlugins(ReactificPlugin)
   .dependsOn(api)
   .settings(commonSettings)
+
+lazy val root = (project in file("."))
+  .aggregate(api, server, web, mobile)
+
