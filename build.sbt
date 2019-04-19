@@ -4,6 +4,7 @@ val commonSettings = Seq(
   developerUrl := url("http://gitlab.com/yoppworks/reactive-gateway/"),
   titleForDocs := "Reactive Gateway",
   codePackage := "com.yoppworks.rxgateway",
+  organization := "com.yoppworks",
   warningsAreErrors := false
 )
 
