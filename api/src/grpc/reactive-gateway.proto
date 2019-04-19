@@ -7,6 +7,8 @@ message AShapeToDraw {
   Color edgeColor = 2;
   Color fillColor = 3;
   uint32 opacity = 4;
+  uint32 width = 5;
+  uint32 height = 6;
 }
 
 message OnePiece {
