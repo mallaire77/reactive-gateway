@@ -6,8 +6,22 @@ option java_outer_classname = "ShapeService";
 
 package com.yoppworks.rxgateway.api;
 
-message RequestShapes {
-  uint32 numberOfShapes = 1;
+message PrepareShapes {
+  uint32 numberOfShapesToPrepare = 1;
+}
+
+message ShapeServiceResult {
+  bool viable = 1;
+  string error = 2;
+}
+
+message GetAShape {
+  uint32 index = 1;
+}
+
+message GetSomeShapes {
+  uint32 startingIndex = 1;  // where to start in prepared shapes
+  uint32 numberOfShapes = 2; // how many to fetch
 }
 
 message Color {
@@ -16,22 +30,44 @@ message Color {
   int32 blue = 3;
 }
 
-message AShapeToDraw {
-  uint32 numberOfSides = 1;
-  Color edgeColor = 2;
-  Color fillColor = 3;
-  uint32 opacity = 4;
-  uint32 width = 5;
-  uint32 height = 6;
+enum Opacity {
+  Transparent = 0;
+  MildlyOpaque = 1;
+  ModeratelyOpaque = 2;
+  MostlyOpaque = 3;
+  Opaque = 4;
 }
 
-message OnePiece {
-  AShapeToDraw shape = 1;
-  uint32 x_coordinate = 2;
-  float rotation = 3;
-  bool animate = 4;
+message Shape {
+  uint32 numberOfSides = 1; // 0 = Circle, 1= line, 2 = vertex, 3 = triangle...
+  Color edgeColor = 2; // Color of the lines
+  Color fillColor = 3; // Color of the fill
+  Opacity opacity = 4; // Opacity of filled region
+  uint32 width = 5; // width of bounding box
+  uint32 height = 6; // height of bounding box
+  float rotation = 7; // angle of rotation in radians
+}
+
+message GetSomeTetrisShapes {
+  uint32 startingIndex = 1;  // where to start in prepared shapes
+  uint32 numberOfShapes = 2; // how many to fetch
+  repeated uint32 dropSpots = 3; // x-axis positions to drop them at
+}
+
+message TetrisShape {
+  Shape shape = 1;
+  uint32 dropSpot = 2;
+  bool animate = 3;
+}
+
+message ReleaseShapes {
+
 }
 
 service ShapeService {
-  rpc requestShapesToDraw (RequestShapes) returns (stream OnePiece) {}
+  rpc prepareShapes(PrepareShapes) returns (ShapeServiceResult) {}
+  rpc getAShape(GetAShape) returns (ShapeServiceResult) {}
+  rpc getSomeShapes(GetSomeShapes) returns (stream Shape) {}
+  rpc getSomeTetrisShapes(GetSomeTetrisShapes) returns (stream TetrisShape);
+  rpc releaseShapes(ReleaseShapes) returns (ShapeServiceResult);
 }
