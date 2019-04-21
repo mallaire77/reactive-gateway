@@ -19,3 +19,15 @@ akkaGrpcCodeGeneratorSettings += "server_power_apis"
 inConfig(Compile)(Seq(
   PB.protoSources += baseDirectory.value / ".." / "api" / "src" / "main" / "proto"
 ))
+
+libraryDependencies ++= Seq(
+  "com.typesafe.akka" %% "akka-discovery"  % "2.5.20",
+  "com.typesafe.akka" %% "akka-protobuf" % "2.5.20",
+  "com.typesafe.akka" %% "akka-stream" % "2.5.20",
+  "com.typesafe.akka" %% "akka-actor-typed"  % "2.5.20",
+  "com.typesafe.akka" %% "akka-parsing" % "10.1.7",
+  "com.typesafe.akka" %% "akka-http2-support" % "10.1.7",
+  "com.typesafe.akka" %% "akka-http" % "10.1.7",
+  "org.scalatest" %% "scalatest" % "3.0.5" % "test",
+  "com.typesafe.akka" %% "akka-actor-testkit-typed" % "2.5.20" % Test
+)
