@@ -130,7 +130,8 @@ class EnforcedProtocol(context: ActorContext[EnforcedProtocol.EPTransition], id:
           replyTo ! Right(getSomeShapes)
           getSomeShapes
         case TransitionToGetSomeTetrisShapes( replyTo) ⇒
-          replyTo ! Right(getSomeTetrisShapesState)
+          replyTo ! Left(
+            "getSomeTetrisShapes not permitted after getSomeShapes")
           getSomeTetrisShapesState
         case TransitionToReleaseShapes( replyTo) ⇒
           replyTo ! Right(releaseShapes)
