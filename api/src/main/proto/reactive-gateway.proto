@@ -22,6 +22,7 @@ message GetAShape {
 message GetSomeShapes {
   uint32 startingIndex = 1;  // where to start in prepared shapes
   uint32 numberOfShapes = 2; // how many to fetch
+  uint32 interval_ms = 3; // milliseconds between shape sends
 }
 
 message Color {
@@ -51,7 +52,8 @@ message Shape {
 message GetSomeTetrisShapes {
   uint32 startingIndex = 1;  // where to start in prepared shapes
   uint32 numberOfShapes = 2; // how many to fetch
-  repeated uint32 dropSpots = 3; // x-axis positions to drop them at
+  uint32 interval_ms = 3; // milliseconds between shape sends
+  repeated uint32 dropSpots = 4; // x-axis positions to drop them at (0-100)
 }
 
 message TetrisShape {
