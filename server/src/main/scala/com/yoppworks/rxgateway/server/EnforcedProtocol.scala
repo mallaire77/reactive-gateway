@@ -36,7 +36,6 @@ object EnforcedProtocol {
   
 }
 
-
 class EnforcedProtocol(context: ActorContext[EnforcedProtocol.EPTransition], id: String)
   extends
   AbstractBehavior[EnforcedProtocol.EPTransition] {

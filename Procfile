@@ -1,0 +1,1 @@
+web: server/target/universal/stage/bin/rx-gateway-server -Dhttp.port=$PORT
