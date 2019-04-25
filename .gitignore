@@ -4,3 +4,4 @@
 */project
 buildinfo.properties
 target/
+.DS_Store
