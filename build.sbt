@@ -15,6 +15,7 @@ lazy val api = (project in file("api"))
 lazy val server = (project in file("server"))
 //  .enablePlugins(ReactificPlugin)
   .dependsOn(api)
+  .enablePlugins(JavaAppPackaging)
 //  .settings(commonSettings)
 
 lazy val web = (project in file("web"))
