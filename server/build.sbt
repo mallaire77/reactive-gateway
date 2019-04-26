@@ -1,12 +1,13 @@
 name := "rx-gateway-server"
-codePackage := "com.yoppworks.rxgateway.server"
+//codePackage := "com.yoppworks.rxgateway.server"
 
 mainClass in (Compile, run) :=
   Some("com.yoppworks.rxgateway.server.ShapeServer")
 
-enablePlugins(BuildInfoPlugin)
+//enablePlugins(BuildInfoPlugin)
 enablePlugins(AkkaGrpcPlugin)
 enablePlugins(JavaAgent)
+
 javaAgents += "org.mortbay.jetty.alpn" % "jetty-alpn-agent" % "2.0.9" % "runtime;test"
 
 akkaGrpcGeneratedSources := Seq(AkkaGrpc.Server)
