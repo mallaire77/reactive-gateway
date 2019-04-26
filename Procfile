@@ -1,1 +1,1 @@
-web: server/target/universal/stage/bin/rx-gateway-server -Dhttp.port=$PORT -Dconfig.file=rx-gateway-server/src/main/resources/server.conf
+web: server/target/universal/stage/bin/rx-gateway-server -Dhttp.port=$PORT -Dconfig.file=server/src/main/resources/server.conf
