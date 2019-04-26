@@ -28,3 +28,9 @@ portions of this demonstration:
 * Web - a web application that shows the shapes
 The fourth sub-project, api, is simply a definition of the gRPC service the 
 other components use. 
+
+# Build Instructions
+
+# Demo Instructions
+
+# Design
