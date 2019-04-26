@@ -12,30 +12,30 @@ import com.yoppworks.rxgateway.api.ShapeServiceHandler
 
 object ShapeServer {
   def main(args: Array[String]): Unit = {
-    val conf = ConfigFactory.parseString("akka.http.server.preview.enable-http2 = on")
-      .withFallback(ConfigFactory.defaultApplication())
-    val actorSystem: ActorSystem = ActorSystem("ShapeServer", conf)
-    val _ = new ShapeServer(actorSystem).run()
+    val conf = ConfigFactory.load().resolve()
+
+    val name: String =
+      conf.getString("akka.http.name")
+
+    val interface: String =
+      conf.getString("akka.http.interface")
+
+    val port: Int =
+      conf.getInt("akka.http.port")
+
+    implicit val actorSystem: ActorSystem =
+      ActorSystem(name, conf)
+
+    new ShapeServer(interface, port).run()
   }
 }
 
-class ShapeServer(system: ActorSystem) {
-  
-  def run() : Future[Http.ServerBinding] = {
+class ShapeServer(interface: String, port: Int)(implicit system: ActorSystem) {
+  def run(): Future[Http.ServerBinding] = {
     // Akka boot up code
     implicit val sys : ActorSystem = system
     implicit val mat : Materializer = ActorMaterializer()
     implicit val ec : ExecutionContext = sys.dispatcher
-
-    // Configuration values
-    val config: com.typesafe.config.Config =
-      ConfigFactory.load().resolve()
-
-    val interface: String =
-      config.getString("akka.http.interface")
-
-    val port: Int =
-      config.getInt("akka.http.port")
     
     // Create service handlers
     val service : HttpRequest => Future[HttpResponse] =
