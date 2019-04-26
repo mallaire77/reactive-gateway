@@ -1,6 +1,7 @@
 package com.yoppworks.rxgateway.server
 
 import scala.concurrent.{ExecutionContext, Future}
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.UseHttp2.Always
 import akka.http.scaladsl.{Http, HttpConnectionContext}
@@ -15,13 +16,13 @@ object ShapeServer {
     val conf = ConfigFactory.load().resolve()
 
     val name: String =
-      conf.getString("akka.http.name")
+      conf.getString("akka.http.server.name")
 
     val interface: String =
-      conf.getString("akka.http.interface")
+      conf.getString("akka.http.server.interface")
 
     val port: Int =
-      conf.getInt("akka.http.port")
+      conf.getInt("akka.http.server.port")
 
     implicit val actorSystem: ActorSystem =
       ActorSystem(name, conf)
