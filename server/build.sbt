@@ -16,6 +16,7 @@ akkaGrpcCodeGeneratorSettings += "server_power_apis"
 // "sourceDirectory in Compile" is "src/main", so this adds "src/main/proto_custom":
 inConfig(Compile)(
   Seq(
+    PB.deleteTargetDirectory := false,
     PB.protoSources += baseDirectory.value / ".." / "api" / "src" / "main" / "proto"))
 
 libraryDependencies ++= Seq(
