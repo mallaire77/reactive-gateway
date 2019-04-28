@@ -11,7 +11,7 @@ val commonSettings =
 
 val compileStageSetting =
   (_project: Project) =>
-    (_project / Compile / compile) := ((_project / Compile / compile) dependsOn (_project / Compile / buildInfo)).value
+    (_project / Compile / compileIncremental) := ((_project / Compile / compileIncremental) dependsOn (_project / Compile / buildInfo)).value
 
 lazy val api =
   (project in file("api"))
