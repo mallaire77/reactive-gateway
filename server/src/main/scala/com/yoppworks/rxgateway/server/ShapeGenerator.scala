@@ -40,7 +40,8 @@ object ShapeGenerator {
       opacity = makeAnOpacity,
       width = randomWithinRange(MinShapeWL, MaxShapeWL),
       height = randomWithinRange(MinShapeWL, MaxShapeWL),
-      rotation = randomWithinRange(MinRotation, MaxRotation))
+      rotation = randomWithinRange(MinRotation, MaxRotation).toFloat
+    )
 
   def makeATetrisShape: TetrisShape =
     TetrisShape()

@@ -27,7 +27,7 @@ object ShapeServer {
     implicit val actorSystem: ActorSystem =
       ActorSystem(name, conf)
 
-    new ShapeServer(interface, port).run()
+    val _ = new ShapeServer(interface, port).run()
   }
 }
 
