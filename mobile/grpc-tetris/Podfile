@@ -1,0 +1,10 @@
+source 'https://github.com/CocoaPods/Specs.git'
+platform :ios, '8.0'
+
+install! 'cocoapods', :deterministic_uuids => false
+
+target 'grpc-tetris' do
+  # Depend on the generated HelloWorld library.
+  pod 'grpc-tetris', :path => '.'
+  pod 'BoringSSL-GRPC','~> 0.0.3'
+end
