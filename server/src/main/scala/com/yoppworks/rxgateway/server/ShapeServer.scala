@@ -38,8 +38,8 @@ class ShapeServer(interface: String, port: Int)(implicit system: ActorSystem) {
     implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
     
     // Create service handlers
-    val service : HttpRequest => Future[HttpResponse] =
-      ShapeServiceHandler(ShapeServiceImpl())
+    val service: HttpRequest => Future[HttpResponse] =
+      API(ShapeServiceHandler(ShapeServiceImpl())).apply
     
     // Bind service handler servers to configured values
     val binding =
@@ -50,7 +50,7 @@ class ShapeServer(interface: String, port: Int)(implicit system: ActorSystem) {
         connectionContext = HttpConnectionContext(http2 = Always))
     
     // report successful binding
-    binding.foreach {binding =>
+    binding.foreach { binding =>
       println(s"gRPC over HTTP/2 server bound to: ${binding.localAddress}")
     }
     
