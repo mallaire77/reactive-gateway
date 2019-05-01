@@ -1,0 +1,60 @@
+{
+  "name": "grpc-tetris",
+  "version": "0.0.1",
+  "license": "Apache License, Version 2.0",
+  "authors": {
+    "gRPC contributors": "grpc-io@googlegroups.com"
+  },
+  "homepage": "https://grpc.io/",
+  "summary": "grpc-tetris example",
+  "source": {
+    "git": "https://github.com/grpc/grpc.git"
+  },
+  "platforms": {
+    "ios": "7.1",
+    "osx": "10.9"
+  },
+  "dependencies": {
+    "!ProtoCompiler-gRPCPlugin": [
+      "~> 1.0"
+    ]
+  },
+  "prepare_command": "mkdir -p Pods/grpc-tetris\nPods/!ProtoCompiler/protoc         --plugin=protoc-gen-grpc=Pods/!ProtoCompiler-gRPCPlugin/grpc_objective_c_plugin         --objc_out=Pods/grpc-tetris         --grpc_out=Pods/grpc-tetris         -I ../../api/src/main/proto/         -I Pods/!ProtoCompiler         ../../api/src/main/proto//reactive-gateway.proto",
+  "pod_target_xcconfig": {
+    "GCC_PREPROCESSOR_DEFINITIONS": "$(inherited) GPB_USE_PROTOBUF_FRAMEWORK_IMPORTS=1",
+    "CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES": "YES"
+  },
+  "subspecs": [
+    {
+      "name": "Messages",
+      "source_files": [
+        "Pods/grpc-tetris/*.pbobjc.{h,m}",
+        "Pods/grpc-tetris/**/*.pbobjc.{h,m}"
+      ],
+      "header_mappings_dir": "Pods/grpc-tetris",
+      "requires_arc": false,
+      "dependencies": {
+        "Protobuf": [
+
+        ]
+      }
+    },
+    {
+      "name": "Services",
+      "source_files": [
+        "Pods/grpc-tetris/*.pbrpc.{h,m}",
+        "Pods/grpc-tetris/**/*.pbrpc.{h,m}"
+      ],
+      "header_mappings_dir": "Pods/grpc-tetris",
+      "requires_arc": true,
+      "dependencies": {
+        "gRPC-ProtoRPC": [
+
+        ],
+        "grpc-tetris/Messages": [
+
+        ]
+      }
+    }
+  ]
+}
