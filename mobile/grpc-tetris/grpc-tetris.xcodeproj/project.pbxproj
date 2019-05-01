@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8EC338852279D71900DE4E27 /* ShapeFactory.m in Sources */ = {isa = PBXBuildFile; fileRef = 8EC338842279D71900DE4E27 /* ShapeFactory.m */; };
+		8EC338882279FCA400DE4E27 /* Queue.m in Sources */ = {isa = PBXBuildFile; fileRef = 8EC338872279FCA400DE4E27 /* Queue.m */; };
 		8EF2528F2272734500088EA9 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 8EF2528E2272734500088EA9 /* AppDelegate.m */; };
 		8EF252922272734500088EA9 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 8EF252912272734500088EA9 /* ViewController.m */; };
 		8EF252952272734500088EA9 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8EF252932272734500088EA9 /* Main.storyboard */; };
@@ -15,6 +17,7 @@
 		8EF2529D2272734600088EA9 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 8EF2529C2272734600088EA9 /* main.m */; };
 		8EF252A72272734600088EA9 /* grpc_tetrisTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 8EF252A62272734600088EA9 /* grpc_tetrisTests.m */; };
 		8EF252B22272734600088EA9 /* grpc_tetrisUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 8EF252B12272734600088EA9 /* grpc_tetrisUITests.m */; };
+		E5D75125F848F253CD61CF6A /* libPods-grpc-tetris.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 84E79511ED64CDE89124CEC2 /* libPods-grpc-tetris.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -35,6 +38,11 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		84E79511ED64CDE89124CEC2 /* libPods-grpc-tetris.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-grpc-tetris.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		8EC338832279D49E00DE4E27 /* ShapeFactory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ShapeFactory.h; sourceTree = "<group>"; };
+		8EC338842279D71900DE4E27 /* ShapeFactory.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ShapeFactory.m; sourceTree = "<group>"; };
+		8EC338862279FC5000DE4E27 /* Queue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Queue.h; sourceTree = "<group>"; };
+		8EC338872279FCA400DE4E27 /* Queue.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Queue.m; sourceTree = "<group>"; };
 		8EF2528A2272734500088EA9 /* grpc-tetris.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "grpc-tetris.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		8EF2528D2272734500088EA9 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		8EF2528E2272734500088EA9 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -51,6 +59,8 @@
 		8EF252AD2272734600088EA9 /* grpc-tetrisUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "grpc-tetrisUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		8EF252B12272734600088EA9 /* grpc_tetrisUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = grpc_tetrisUITests.m; sourceTree = "<group>"; };
 		8EF252B32272734600088EA9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		DC3362E6F1CA48A11BF08D1C /* Pods-grpc-tetris.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-grpc-tetris.release.xcconfig"; path = "Target Support Files/Pods-grpc-tetris/Pods-grpc-tetris.release.xcconfig"; sourceTree = "<group>"; };
+		F6A350E5DA2A4E3B701C44D0 /* Pods-grpc-tetris.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-grpc-tetris.debug.xcconfig"; path = "Target Support Files/Pods-grpc-tetris/Pods-grpc-tetris.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +68,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E5D75125F848F253CD61CF6A /* libPods-grpc-tetris.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,6 +89,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		3C59A9EC2E34A0CE10773FF3 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				84E79511ED64CDE89124CEC2 /* libPods-grpc-tetris.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		8EF252812272734500088EA9 = {
 			isa = PBXGroup;
 			children = (
@@ -85,6 +104,8 @@
 				8EF252A52272734600088EA9 /* grpc-tetrisTests */,
 				8EF252B02272734600088EA9 /* grpc-tetrisUITests */,
 				8EF2528B2272734500088EA9 /* Products */,
+				A5305464BF8AD00D5A0D1226 /* Pods */,
+				3C59A9EC2E34A0CE10773FF3 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -110,6 +131,10 @@
 				8EF252982272734600088EA9 /* LaunchScreen.storyboard */,
 				8EF2529B2272734600088EA9 /* Info.plist */,
 				8EF2529C2272734600088EA9 /* main.m */,
+				8EC338832279D49E00DE4E27 /* ShapeFactory.h */,
+				8EC338842279D71900DE4E27 /* ShapeFactory.m */,
+				8EC338862279FC5000DE4E27 /* Queue.h */,
+				8EC338872279FCA400DE4E27 /* Queue.m */,
 			);
 			path = "grpc-tetris";
 			sourceTree = "<group>";
@@ -132,6 +157,15 @@
 			path = "grpc-tetrisUITests";
 			sourceTree = "<group>";
 		};
+		A5305464BF8AD00D5A0D1226 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				F6A350E5DA2A4E3B701C44D0 /* Pods-grpc-tetris.debug.xcconfig */,
+				DC3362E6F1CA48A11BF08D1C /* Pods-grpc-tetris.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -139,9 +173,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 8EF252B62272734600088EA9 /* Build configuration list for PBXNativeTarget "grpc-tetris" */;
 			buildPhases = (
+				6084DDFE4785D05BF0789A74 /* [CP] Check Pods Manifest.lock */,
 				8EF252862272734500088EA9 /* Sources */,
 				8EF252872272734500088EA9 /* Frameworks */,
 				8EF252882272734500088EA9 /* Resources */,
+				707FE035A537BD0399FC0F65 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -257,13 +293,62 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		6084DDFE4785D05BF0789A74 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-grpc-tetris-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		707FE035A537BD0399FC0F65 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-grpc-tetris/Pods-grpc-tetris-resources.sh",
+				"${PODS_CONFIGURATION_BUILD_DIR}/gRPC/gRPCCertificates.bundle",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/gRPCCertificates.bundle",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-grpc-tetris/Pods-grpc-tetris-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		8EF252862272734500088EA9 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8EC338882279FCA400DE4E27 /* Queue.m in Sources */,
 				8EF252922272734500088EA9 /* ViewController.m in Sources */,
 				8EF2529D2272734600088EA9 /* main.m in Sources */,
+				8EC338852279D71900DE4E27 /* ShapeFactory.m in Sources */,
 				8EF2528F2272734500088EA9 /* AppDelegate.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -433,6 +518,7 @@
 		};
 		8EF252B72272734600088EA9 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = F6A350E5DA2A4E3B701C44D0 /* Pods-grpc-tetris.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
@@ -449,6 +535,7 @@
 		};
 		8EF252B82272734600088EA9 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = DC3362E6F1CA48A11BF08D1C /* Pods-grpc-tetris.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
