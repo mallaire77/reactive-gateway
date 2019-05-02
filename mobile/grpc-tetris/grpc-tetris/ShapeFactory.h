@@ -10,6 +10,7 @@
 #define ShapeFactory_h
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
+#import <grpc-tetris/ReactiveGateway.pbrpc.h>
 
 typedef enum shapeType
 {
@@ -20,7 +21,6 @@ typedef enum shapeType
 } ShapeType;
 
 @interface ShapeFactory: NSObject
-- (UIView *) createWithType:(ShapeType) shapeType;
-
+- (UIView *) createWithShape:(Shape *) shape;
 @end
 #endif /* ShapeFactory_h */
