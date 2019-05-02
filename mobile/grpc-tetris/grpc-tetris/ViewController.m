@@ -44,17 +44,29 @@ static float REFRESH_INTERVAL = 2.0;
     if(!self.queue.isEmpty){
         TetrisShape *tetrisShape = self.queue.dequeue;
         NSLog(@"Creating Shape %d...",tetrisShape.shape.numberOfSides);
-        UIView *view =[self.shapeFactory createWithType:tetrisShape.shape.numberOfSides];
-        view.center = CGPointMake(self.shapeDrawingView.frame.size.width  / 2,
-                              self.shapeDrawingView.frame.size.height / 2);
-        [[NSOperationQueue mainQueue] addOperationWithBlock:^ {
-            if(self.lastShapeView != nil){
-                [self.lastShapeView removeFromSuperview];
-            }
-            [self.shapeDrawingView addSubview:view];
-            self.lastShapeView = view;
-        }];
-        
+        UIView *view =[self.shapeFactory createWithShape:tetrisShape.shape];
+        if(view!=nil){
+            view.alpha = 0.5;
+            view.center = CGPointMake(self.shapeDrawingView.frame.size.width  / 2,
+                                      view.frame.size.height );
+            [[NSOperationQueue mainQueue] addOperationWithBlock:^ {
+                if(self.lastShapeView != nil){
+                    [self.lastShapeView removeFromSuperview];
+                }
+                [self.shapeDrawingView addSubview:view];
+                self.lastShapeView = view;
+                float finalPosition = self.shapeDrawingView.frame.size.height - view.frame.size.height;
+                [UIView animateWithDuration:1
+                                 animations:^{
+                                     view.alpha = 1.0;
+                                     view.center = CGPointMake(self.shapeDrawingView.frame.size.width  / 2,
+                                                               finalPosition);
+                                 }
+                                 completion:^(BOOL finished){
+                                     
+                }];
+            }];
+        }
     }
 }
 
