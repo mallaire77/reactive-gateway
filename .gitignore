@@ -5,3 +5,6 @@
 buildinfo.properties
 target/
 .DS_Store
+mobile/grpc-tetris/Pods/
+mobile/grpc-tetris/Podfile.lock
+mobile/grpc-tetris/grpc-tetris.xcworkspace
