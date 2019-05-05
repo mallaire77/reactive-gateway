@@ -7,7 +7,6 @@ import akka.http.scaladsl.UseHttp2.Always
 import akka.http.scaladsl.{Http, HttpConnectionContext}
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.stream.{ActorMaterializer, Materializer}
-
 import com.typesafe.config.ConfigFactory
 import com.yoppworks.rxgateway.api.ShapeServiceHandler
 
@@ -23,15 +22,16 @@ object ShapeServer {
 
     val port: Int =
       conf.getInt("akka.http.server.port")
-
-    implicit val actorSystem: ActorSystem =
-      ActorSystem(name, conf)
-
+    
+    implicit val actorSystem: ActorSystem = ActorSystem(name)
+    
     val _ = new ShapeServer(interface, port).run()
   }
 }
 
-class ShapeServer(interface: String, port: Int)(implicit system: ActorSystem) {
+class ShapeServer(
+  interface: String, port: Int
+)(implicit system: ActorSystem) {
   def run(): Future[Http.ServerBinding] = {
     // Akka boot up code
     implicit val mat: Materializer = ActorMaterializer()
