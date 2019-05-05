@@ -28,23 +28,23 @@ object EnforcedProtocol {
     replyTo: ActorRef[ErrorResult]
   )
   
-  private val main: Behavior[CheckTransition] = {
-    Behaviors.setup[CheckTransition] { implicit context: ActorContext[_] ⇒
-      Behaviors.receiveMessage[CheckTransition] { message =>
-        checkTransition(message)
-        Behaviors.same
+  private def main: Behavior[CheckTransition] = {
+    Behaviors.receive[CheckTransition] {
+      case (context, message) ⇒
+        message match {
+          case m: CheckTransition ⇒
+            checkTransition(m)(context)
+            Behaviors.same
+        }
       }
-      Behaviors.receiveSignal {
-        case (_, Terminated(_)) =>
-          Behaviors.stopped
-      }
-    }
   }
   
-  val system : ActorSystem[ CheckTransition ] =
+  private val system : ActorSystem[CheckTransition] =
     ActorSystem(main, "protocol-enforcement")
   
-  implicit val timeout: Timeout = Timeout(10.seconds)
+  implicit val timeout: Timeout = Timeout(60.seconds)
+  implicit val ec: ExecutionContext = system.executionContext
+  implicit val scheduler : Scheduler = system.scheduler
   
   sealed trait ProtocolStateTransition
 
@@ -68,7 +68,6 @@ object EnforcedProtocol {
    */
   def tryTransition(id: String, transition: ProtocolStateTransition)
   : Future[ErrorResult] = {
-    implicit val scheduler : Scheduler = system.scheduler
     system ?[ErrorResult] { actorRef ⇒
       CheckTransition(id, transition, actorRef)
     }
@@ -79,8 +78,6 @@ object EnforcedProtocol {
     check: CheckTransition
   )(implicit context: ActorContext[_]
   ) : Future[Unit] = {
-    implicit val scheduler : Scheduler = context.system.scheduler
-    implicit val executor : ExecutionContext = context.system.executionContext
     val serviceKey = ServiceKey[ CheckTransition ](check.name)
     val futureListing : Future[ Receptionist.Listing ] = {
       context.system.receptionist ? {

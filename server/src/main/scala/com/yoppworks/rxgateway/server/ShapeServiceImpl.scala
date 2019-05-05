@@ -12,7 +12,7 @@ import com.yoppworks.rxgateway.api._
 import com.yoppworks.rxgateway.server.EnforcedProtocol._
 
 /** Unit Tests For ShapeServiceImpl */
-case class ShapeServiceImpl()(implicit executor: ExecutionContext) extends ShapeService {
+case class ShapeServiceImpl() extends ShapeService {
   
   final val headerKey = "X-USERNAME"
   

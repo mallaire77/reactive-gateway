@@ -1,74 +1,48 @@
 package com.yoppworks.rxgateway.server
 
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration._
 
 import akka.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
-import com.yoppworks.rxgateway.server.EnforcedProtocol.{ToGetAShape, ToPrepareShapes}
-import org.scalatest.{Assertion, WordSpecLike}
+import com.yoppworks.rxgateway.server.EnforcedProtocol.{ToGetAShape, ToGetSomeShapes, ToPrepareShapes}
+import org.scalatest.{WordSpecLike}
 
 /** Unit Tests For ConventionEnforcementSpec */
-class EnforcedProtocolSpec extends ScalaTestWithActorTestKit with
-  WordSpecLike {
+class EnforcedProtocolSpec extends ScalaTestWithActorTestKit with WordSpecLike {
   
   val id = "test-id"
+  implicit val ec: ExecutionContext = system.executionContext
   
   "EnforcedProtocolSpec" must {
     "allow normal getAShape transitions" in {
-      implicit val ec: ExecutionContext = ExecutionContext.global
-  
-      val f1 = EnforcedProtocol
-        .tryTransition(id, ToPrepareShapes)
-        .map {
-          case None ⇒
-            succeed
-          case Some(message) ⇒
-            fail(message)
-        }.recover {
-        case x: Exception ⇒
-          fail(x.getClass.getName + ": " + x.getMessage)
+      val future = for {
+        f1 ← EnforcedProtocol.tryTransition(id + 1, ToPrepareShapes)
+        f2 ← EnforcedProtocol.tryTransition(id + 1, ToGetAShape)
+      } yield {
+        if (f1.isEmpty && f2.isEmpty) {
+          succeed
+        } else {
+          fail(f1.getOrElse(f2.get))
+        }
       }
-      val f2 = f1.flatMap[Assertion] { x ⇒
-        if (x == succeed) {
-          EnforcedProtocol.tryTransition(id, ToGetAShape).map {
-            case None ⇒
-              succeed
-            case Some(message) ⇒
-              fail(message)
-          }
-        } else { Future.successful ( x ) }
-      }.recover {
-        case x: Exception ⇒
-          fail(x.getClass.getName + ": " + x.getMessage)
-      }
-      Await.result(f2, 10.seconds)
+      Await.result(future, 2.seconds)
     }
-    /*
     "prevent getSAShape to follow getSomeShapes" in {
-      val probe = createTestProbe[ Either[ String, EnforcedProtocol.State ] ]
-      val actor = spawn(EnforcedProtocol("foo"))
-  
-      actor ! EnforcedProtocol.ToPrepareShapes(probe.ref)
-      probe.receiveMessage() match {
-        case Right(_) ⇒
-          actor ! EnforcedProtocol.ToGetSomeShapes(probe.ref)
-          probe.receiveMessage match {
-            case Right(_) ⇒
-              actor ! EnforcedProtocol.TransitionToGetAShape(probe.ref)
-              probe.receiveMessage match {
-                case Right(_) ⇒
-                  fail("Should have prevented transition to GetSomeShapes")
-                case Left(_) ⇒
-                  succeed
-              }
-            case Left(message) ⇒
-              fail(message)
-          }
-        case Left(message) ⇒
-          fail(message)
+      val future = for {
+        f1 <- EnforcedProtocol.tryTransition(id + 2, ToPrepareShapes)
+        f2 ← EnforcedProtocol.tryTransition(id + 2, ToGetSomeShapes)
+        f3 ← EnforcedProtocol.tryTransition(id + 2, ToGetAShape)
+      } yield {
+        if (f1.isEmpty && f2.isEmpty && f3.isDefined) {
+          succeed
+        } else {
+          fail(f1.getOrElse(f2.getOrElse(f3.get)))
+        }
       }
+      Await.result(future, 2.seconds)
     }
-    
-     */
   }
+  
+  override def afterAll(): Unit = testKit.shutdownTestKit()
+  
 }
