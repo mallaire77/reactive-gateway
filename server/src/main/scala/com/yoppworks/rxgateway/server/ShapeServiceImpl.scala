@@ -19,7 +19,7 @@ case class ShapeServiceImpl() extends ShapeService {
 
   final val SuccessfulShapeServiceResult = "Success"
 
-  def prepareShapes(metadata: Metadata, in: PrepareShapes): Future[ShapeServiceResult] =
+  def prepareShapes(in: PrepareShapes, metadata: Metadata): Future[ShapeServiceResult] =
     checkTransitionFuture(metadata, ToReleaseShapes) {
       prepareShapes(in)
     }(err = msg => Future.successful(ShapeServiceResult(viable = false, msg)))
@@ -27,7 +27,7 @@ case class ShapeServiceImpl() extends ShapeService {
   def prepareShapes(in: PrepareShapes): Future[ShapeServiceResult] =
     Future.successful(ShapeServiceResult(viable = true, SuccessfulShapeServiceResult))
 
-  def getAShape(metadata: Metadata, in: GetAShape): Future[ShapeServiceResult] =
+  def getAShape(in: GetAShape, metadata: Metadata): Future[ShapeServiceResult] =
     checkTransitionFuture(metadata, ToReleaseShapes) {
       getAShape(in)
     }(err = msg => Future.successful(ShapeServiceResult(viable = false, msg)))
@@ -35,7 +35,7 @@ case class ShapeServiceImpl() extends ShapeService {
   def getAShape(in: GetAShape): Future[ShapeServiceResult] =
     Future.successful(ShapeServiceResult(viable = true, SuccessfulShapeServiceResult))
 
-  def getSomeShapes(metadata: Metadata, in: GetSomeShapes): Source[Shape, NotUsed] =
+  def getSomeShapes(in: GetSomeShapes, metadata: Metadata): Source[Shape, NotUsed] =
     checkTransitionStream(metadata, ToReleaseShapes) {
       getSomeShapes(in)
     }()
@@ -54,7 +54,7 @@ case class ShapeServiceImpl() extends ShapeService {
       }
       .viaMat(Flow[Shape].map(identity))(Keep.right)
 
-  def getSomeTetrisShapes(metadata: Metadata, in: GetSomeTetrisShapes): Source[TetrisShape, NotUsed] =
+  def getSomeTetrisShapes(in: GetSomeTetrisShapes, metadata: Metadata): Source[TetrisShape, NotUsed] =
     checkTransitionStream(metadata, ToReleaseShapes) {
       getSomeTetrisShapes(in)
     }()
@@ -62,7 +62,7 @@ case class ShapeServiceImpl() extends ShapeService {
   def getSomeTetrisShapes(in: GetSomeTetrisShapes): Source[TetrisShape, NotUsed] =
     Source.empty[TetrisShape]
 
-  def releaseShapes(metadata: Metadata, in: ReleaseShapes): Future[ShapeServiceResult] =
+  def releaseShapes(in: ReleaseShapes, metadata: Metadata): Future[ShapeServiceResult] =
     checkTransitionFuture(metadata, ToReleaseShapes) {
       releaseShapes(in)
     }(err = msg => Future.successful(ShapeServiceResult(viable = false, msg)))

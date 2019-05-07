@@ -8,13 +8,7 @@ import scala.concurrent.Future
 
 case class API(default: HttpRequest => Future[HttpResponse]) {
   def apply(request: HttpRequest): Future[HttpResponse] = {
-    println {
-      s"""
-         |{
-         |  "uri": ${request.uri.toString()}
-         |}
-       """.stripMargin.trim
-    }
+    println(s"uri=${request.uri.toString()}")
 
     request.uri.path match {
       case Path.Slash(Segment("ping", Path.Empty)) =>

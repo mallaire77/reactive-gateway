@@ -49,7 +49,7 @@ class ShapeServer(
         port = port,
         connectionContext = HttpConnectionContext(http2 = Always))
     
-    // report successful binding
+    // Report successful binding
     binding.foreach { binding =>
       println(s"gRPC over HTTP/2 server bound to: ${binding.localAddress}")
     }
