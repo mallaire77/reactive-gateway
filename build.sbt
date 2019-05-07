@@ -36,4 +36,6 @@ lazy val mobile =
     .settings(commonSettings)
 
 lazy val root = 
-  (project in file(".")).aggregate(api, server, web, mobile)
+  (project in file("."))
+    .settings(name := "reactive-gateway")
+    .aggregate(api, server, web, mobile)
