@@ -68,9 +68,7 @@ case class ShapeServiceImpl() extends ShapeService {
     }(err = msg => Future.successful(ShapeServiceResult(viable = false, msg)))
 
   def releaseShapes(in: ReleaseShapes): Future[ShapeServiceResult] =
-    Future {
-      ShapeServiceResult()
-    }
+    Future.successful(ShapeServiceResult(viable = true, SuccessfulShapeServiceResult))
 
   private def checkTransitionStream[T](
     metadata: Metadata,
