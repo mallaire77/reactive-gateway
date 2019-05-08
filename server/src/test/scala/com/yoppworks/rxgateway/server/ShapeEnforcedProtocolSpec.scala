@@ -4,11 +4,11 @@ import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration._
 
 import akka.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
-import com.yoppworks.rxgateway.server.EnforcedProtocol.{ToGetAShape, ToGetSomeShapes, ToPrepareShapes, ToReleaseShapes}
+import com.yoppworks.rxgateway.server.ShapeEnforcedProtocol.{ToGetAShape, ToGetSomeShapes, ToPrepareShapes, ToReleaseShapes}
 import org.scalatest.WordSpecLike
 
 /** Unit Tests For EnforcedProtocolSpec */
-class EnforcedProtocolSpec extends ScalaTestWithActorTestKit with WordSpecLike {
+class ShapeEnforcedProtocolSpec extends ScalaTestWithActorTestKit with WordSpecLike {
   
   val id = "test-id"
   implicit val ec: ExecutionContext = system.executionContext
@@ -17,8 +17,8 @@ class EnforcedProtocolSpec extends ScalaTestWithActorTestKit with WordSpecLike {
     "allow normal getAShape transitions" in {
       val myId = id + 1
       val future = for {
-        f1 ← EnforcedProtocol.tryTransition(myId, ToPrepareShapes)
-        f2 ← EnforcedProtocol.tryTransition(myId, ToGetAShape)
+        f1 ← ShapeEnforcedProtocol.tryTransition(myId, ToPrepareShapes)
+        f2 ← ShapeEnforcedProtocol.tryTransition(myId, ToGetAShape)
       } yield {
         if (f1.isEmpty && f2.isEmpty) {
           succeed
@@ -31,9 +31,9 @@ class EnforcedProtocolSpec extends ScalaTestWithActorTestKit with WordSpecLike {
     "prevent getSAShape following after getSomeShapes" in {
       val myId = id + 2
       val future = for {
-        f1 ← EnforcedProtocol.tryTransition(myId, ToPrepareShapes)
-        f2 ← EnforcedProtocol.tryTransition(myId, ToGetSomeShapes)
-        f3 ← EnforcedProtocol.tryTransition(myId, ToGetAShape)
+        f1 ← ShapeEnforcedProtocol.tryTransition(myId, ToPrepareShapes)
+        f2 ← ShapeEnforcedProtocol.tryTransition(myId, ToGetSomeShapes)
+        f3 ← ShapeEnforcedProtocol.tryTransition(myId, ToGetAShape)
       } yield {
         if (f1.isEmpty && f2.isEmpty && f3.isDefined) {
           succeed
@@ -47,11 +47,11 @@ class EnforcedProtocolSpec extends ScalaTestWithActorTestKit with WordSpecLike {
     "ensure a complete transaction is permitted" in {
       val myId = id + 3
       val future = for {
-        f1 ← EnforcedProtocol.tryTransition(myId, ToPrepareShapes)
-        f2 ← EnforcedProtocol.tryTransition(myId, ToGetAShape)
-        f3 ← EnforcedProtocol.tryTransition(myId, ToGetSomeShapes)
-        f4 ← EnforcedProtocol.tryTransition(myId, ToGetSomeShapes)
-        f5 ← EnforcedProtocol.tryTransition(myId, ToReleaseShapes)
+        f1 ← ShapeEnforcedProtocol.tryTransition(myId, ToPrepareShapes)
+        f2 ← ShapeEnforcedProtocol.tryTransition(myId, ToGetAShape)
+        f3 ← ShapeEnforcedProtocol.tryTransition(myId, ToGetSomeShapes)
+        f4 ← ShapeEnforcedProtocol.tryTransition(myId, ToGetSomeShapes)
+        f5 ← ShapeEnforcedProtocol.tryTransition(myId, ToReleaseShapes)
       } yield {
         assert(Seq(f1,f2,f3,f4,f5).filterNot(_.isEmpty).isEmpty)
       }

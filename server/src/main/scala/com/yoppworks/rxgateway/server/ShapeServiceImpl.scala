@@ -3,14 +3,19 @@ package com.yoppworks.rxgateway.server
 import java.util.UUID
 
 import akka.NotUsed
+import akka.actor.ActorSystem
 import akka.stream.scaladsl.{Flow, Keep, Source}
 import akka.grpc.scaladsl.Metadata
 
 import com.yoppworks.rxgateway.api._
-import com.yoppworks.rxgateway.server.EnforcedProtocol._
+import com.yoppworks.rxgateway.server.ShapeEnforcedProtocol._
+import com.yoppworks.rxgateway.server.ShapeServiceImpl.InvalidStateChange
+
+import io.grpc.Status
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.util.control.NoStackTrace
 
 /** Unit Tests For ShapeServiceImpl */
 case class ShapeServiceImpl() extends ShapeService {
@@ -73,7 +78,7 @@ case class ShapeServiceImpl() extends ShapeService {
   private def checkTransitionStream[T](
     metadata: Metadata,
     transition: ProtocolStateTransition
-  )(fn: => Source[T, NotUsed])(err: String => Source[T, NotUsed] = (msg: String) => throw new Exception(msg)): Source[T, NotUsed] =
+  )(fn: => Source[T, NotUsed])(err: String => Source[T, NotUsed] = (_: String) => throw InvalidStateChange): Source[T, NotUsed] =
     Source
       .fromFuture(tryTransition(idFromMetadata(metadata), transition))
       .flatMapConcat {
@@ -87,7 +92,7 @@ case class ShapeServiceImpl() extends ShapeService {
   private def checkTransitionFuture[T](
     metadata: Metadata,
     transition: ProtocolStateTransition
-  )(fn: => Future[T])(err: String => Future[T] = (msg: String) => throw new Exception(msg)): Future[T] =
+  )(fn: => Future[T])(err: String => Future[T] = (_: String) => throw InvalidStateChange): Future[T] =
     tryTransition(idFromMetadata(metadata), transition)
       .flatMap {
         case None ⇒
@@ -101,4 +106,13 @@ case class ShapeServiceImpl() extends ShapeService {
     metadata
       .getText(HeaderKey)
       .getOrElse(UUID.randomUUID().toString)
+}
+
+object ShapeServiceImpl {
+  case object InvalidStateChange extends Throwable with NoStackTrace
+
+  def ErrorHandler(implicit system: ActorSystem): PartialFunction[Throwable, Status] = {
+    case InvalidStateChange =>
+      Status.FAILED_PRECONDITION
+  }
 }
