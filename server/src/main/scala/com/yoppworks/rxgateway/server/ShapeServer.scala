@@ -1,14 +1,17 @@
 package com.yoppworks.rxgateway.server
 
-import scala.concurrent.{ExecutionContext, Future}
-
 import akka.actor.ActorSystem
 import akka.http.scaladsl.UseHttp2.Always
 import akka.http.scaladsl.{Http, HttpConnectionContext}
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.stream.{ActorMaterializer, Materializer}
+
 import com.typesafe.config.ConfigFactory
 import com.yoppworks.rxgateway.api.ShapeServiceHandler
+import com.yoppworks.rxgateway.server.lib.Handler
+import com.yoppworks.rxgateway.server.lib.Handler.SystemErrorHandler
+
+import scala.concurrent.{ExecutionContext, Future}
 
 object ShapeServer {
   def main(args: Array[String]): Unit = {
@@ -36,10 +39,17 @@ class ShapeServer(
     // Akka boot up code
     implicit val mat: Materializer = ActorMaterializer()
     implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
-    
+
+    // Infrastructure error mappers
+    val registeredErrorHandlers: SystemErrorHandler = { system =>
+      ShapeServiceImpl.ErrorHandler(system)
+    }
+
     // Create service handlers
     val service: HttpRequest => Future[HttpResponse] =
-      API(ShapeServiceHandler(ShapeServiceImpl())).apply
+      Handler { eHandler =>
+        ShapeServiceHandler.partial(ShapeServiceImpl(), eHandler = eHandler)
+      }(registeredErrorHandlers).apply
     
     // Bind service handler servers to configured values
     val binding =
@@ -49,7 +59,7 @@ class ShapeServer(
         port = port,
         connectionContext = HttpConnectionContext(http2 = Always))
     
-    // report successful binding
+    // Report successful binding
     binding.foreach { binding =>
       println(s"gRPC over HTTP/2 server bound to: ${binding.localAddress}")
     }

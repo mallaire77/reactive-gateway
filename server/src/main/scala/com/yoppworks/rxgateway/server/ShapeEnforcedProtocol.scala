@@ -26,7 +26,7 @@ import akka.actor.Scheduler
  * The implementation uses an Akka Typed actor for each client that is
  * managed by Akka Typed's Receptionist protocol.
  */
-object EnforcedProtocol {
+object ShapeEnforcedProtocol {
   
   /**
    * The basic message transmitted to the Actor to try a transition
