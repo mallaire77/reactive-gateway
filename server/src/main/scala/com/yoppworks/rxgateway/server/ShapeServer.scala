@@ -5,28 +5,27 @@ import akka.http.scaladsl.UseHttp2.Always
 import akka.http.scaladsl.{Http, HttpConnectionContext}
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.stream.{ActorMaterializer, Materializer}
-
 import com.typesafe.config.ConfigFactory
 import com.yoppworks.rxgateway.api.ShapeServiceHandler
 import com.yoppworks.rxgateway.server.lib.Handler
 import com.yoppworks.rxgateway.server.lib.Handler.SystemErrorHandler
-
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
 
 object ShapeServer {
+  val conf = ConfigFactory.load().resolve()
+  
+  val name: String =
+    conf.getString("akka.http.server.name")
+  
+  implicit val actorSystem: ActorSystem = ActorSystem(name)
+  
   def main(args: Array[String]): Unit = {
-    val conf = ConfigFactory.load().resolve()
-
-    val name: String =
-      conf.getString("akka.http.server.name")
-
     val interface: String =
       conf.getString("akka.http.server.interface")
 
     val port: Int =
       conf.getInt("akka.http.server.port")
-    
-    implicit val actorSystem: ActorSystem = ActorSystem(name)
     
     val _ = new ShapeServer(interface, port).run()
   }
@@ -57,13 +56,16 @@ class ShapeServer(
         service,
         interface = interface,
         port = port,
-        connectionContext = HttpConnectionContext(http2 = Always))
+        connectionContext = HttpConnectionContext(http2 = Always)
+      )
     
-    // Report successful binding
-    binding.foreach { binding =>
-      println(s"gRPC over HTTP/2 server bound to: ${binding.localAddress}")
+    binding.andThen {
+      case Success(binding) ⇒
+        println(s"gRPC over HTTP/2 server bound to: ${binding.localAddress}")
+      case Failure(xcptn) ⇒
+        println(s"grPC over HTTP/2 server binding failed: ${xcptn.getClass
+          .getName}: ${xcptn.getMessage}")
+        ShapeServer.actorSystem.terminate()
     }
-    
-    binding
   }
 }
