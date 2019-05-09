@@ -68,7 +68,7 @@ message ReleaseShapes {
 
 service ShapeService {
   rpc prepareShapes(PrepareShapes) returns (ShapeServiceResult) {}
-  rpc getAShape(GetAShape) returns (ShapeServiceResult) {}
+  rpc getAShape(GetAShape) returns (Shape) {}
   rpc getSomeShapes(GetSomeShapes) returns (stream Shape) {}
   rpc getSomeTetrisShapes(GetSomeTetrisShapes) returns (stream TetrisShape);
   rpc releaseShapes(ReleaseShapes) returns (ShapeServiceResult);
