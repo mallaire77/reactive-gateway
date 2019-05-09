@@ -22,8 +22,8 @@ object ShapeGrpcServer extends GrpcServer with App {
   lazy val port: Int =
     conf.getInt("akka.http.server.port")
 
-  implicit val system: ActorSystem = ActorSystem(name)
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
+  implicit lazy val system: ActorSystem = ActorSystem(name)
+  implicit lazy val materializer: ActorMaterializer = ActorMaterializer()
   implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
 
   lazy val GrpcRejectionHandlers =
@@ -31,4 +31,6 @@ object ShapeGrpcServer extends GrpcServer with App {
 
   lazy val GrpcHandler =
     errorHandler => ShapeServiceHandler.partial(ShapeServiceImpl(), eHandler = errorHandler)
+
+  run()
 }
