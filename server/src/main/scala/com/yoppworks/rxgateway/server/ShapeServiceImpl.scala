@@ -32,13 +32,13 @@ case class ShapeServiceImpl() extends ShapeService {
   def prepareShapes(in: PrepareShapes): Future[ShapeServiceResult] =
     Future.successful(ShapeServiceResult(viable = true, SuccessfulShapeServiceResult))
 
-  def getAShape(in: GetAShape, metadata: Metadata): Future[ShapeServiceResult] =
+  def getAShape(in: GetAShape, metadata: Metadata): Future[Shape] =
     checkTransitionFuture(metadata, ToReleaseShapes) {
       getAShape(in)
-    }(err = msg => Future.successful(ShapeServiceResult(viable = false, msg)))
+    }(err = msg => Future.successful(ShapeGenerator.makeAShape))
 
-  def getAShape(in: GetAShape): Future[ShapeServiceResult] =
-    Future.successful(ShapeServiceResult(viable = true, SuccessfulShapeServiceResult))
+  def getAShape(in: GetAShape): Future[Shape] =
+    Future.successful(ShapeGenerator.makeAShape)
 
   def getSomeShapes(in: GetSomeShapes, metadata: Metadata): Source[Shape, NotUsed] =
     checkTransitionStream(metadata, ToReleaseShapes) {
