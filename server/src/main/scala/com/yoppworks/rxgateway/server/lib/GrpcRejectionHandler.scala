@@ -6,11 +6,11 @@ import io.grpc.Status
 
 import scala.util.control.NoStackTrace
 
-object ErrorHandler {
-  case class GrpcError(status: Int, message: String) extends Throwable(message) with NoStackTrace
+object GrpcRejectionHandler {
+  case class GrpcRejection(status: Int, message: String) extends Throwable(message) with NoStackTrace
 
   def errorMapper(implicit system: ActorSystem): PartialFunction[Throwable, Status] = {
-    case GrpcError(status, _) =>
+    case GrpcRejection(status, _) =>
       Status.fromCodeValue(status)
   }
 }

@@ -16,17 +16,20 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.control.NoStackTrace
 
-/** Unit Tests For ShapeServiceImpl */
 case class ShapeServiceImpl() extends ShapeService {
-  
-  final val HeaderKey = "X-USERNAME"
+  private type Message = String
 
-  final val SuccessfulShapeServiceResult = "Success"
+  private final val HeaderKey = "X-USERNAME"
+
+  private final val SuccessfulShapeServiceResult = "Success"
+
+  private final val FailedShapeServiceResult: Message => Future[ShapeServiceResult] =
+    msg => Future.successful(ShapeServiceResult(viable = false, msg))
 
   def prepareShapes(in: PrepareShapes, metadata: Metadata): Future[ShapeServiceResult] =
     checkTransitionFuture(metadata, ToReleaseShapes) {
       prepareShapes(in)
-    }(err = msg => Future.successful(ShapeServiceResult(viable = false, msg)))
+    }(FailedShapeServiceResult)
 
   def prepareShapes(in: PrepareShapes): Future[ShapeServiceResult] =
     Future.successful(ShapeServiceResult(viable = true, SuccessfulShapeServiceResult))
@@ -63,18 +66,24 @@ case class ShapeServiceImpl() extends ShapeService {
       getSomeTetrisShapes(in)
     }()
 
-  def getSomeTetrisShapes(in: GetSomeTetrisShapes): Source[TetrisShape, NotUsed] = {
-    Source.empty[TetrisShape]
-    Source(in.startingIndex.to(in.startingIndex+in.numberOfShapes)).map { _ ⇒
-      Thread.sleep(in.intervalMs)
-      ShapeGenerator.makeATetrisShape
-    }
-  }
+  def getSomeTetrisShapes(in: GetSomeTetrisShapes): Source[TetrisShape, NotUsed] =
+    Source
+      .tick(0.seconds, in.intervalMs.milliseconds, ShapeGenerator.makeATetrisShape(in.dropSpots))
+      .zipWithIndex
+      .takeWhile {
+        case (_, idx) =>
+          idx + in.startingIndex < in.startingIndex + in.numberOfShapes
+      }
+      .map {
+        case (shape, _) =>
+          shape
+      }
+      .viaMat(Flow[TetrisShape].map(identity))(Keep.right)
 
   def releaseShapes(in: ReleaseShapes, metadata: Metadata): Future[ShapeServiceResult] =
     checkTransitionFuture(metadata, ToReleaseShapes) {
       releaseShapes(in)
-    }(err = msg => Future.successful(ShapeServiceResult(viable = false, msg)))
+    }(FailedShapeServiceResult)
 
   def releaseShapes(in: ReleaseShapes): Future[ShapeServiceResult] =
     Future.successful(ShapeServiceResult(viable = true, SuccessfulShapeServiceResult))
@@ -115,7 +124,7 @@ case class ShapeServiceImpl() extends ShapeService {
 object ShapeServiceImpl {
   case object InvalidStateChange extends Throwable with NoStackTrace
 
-  def ErrorHandler: PartialFunction[Throwable, Status] = {
+  def RejectionHandler: PartialFunction[Throwable, Status] = {
     case InvalidStateChange =>
       Status.FAILED_PRECONDITION
   }

@@ -1,10 +1,11 @@
 package com.yoppworks.rxgateway.server
 
 import com.yoppworks.rxgateway.api.{Color, Opacity, Shape, TetrisShape}
+import com.yoppworks.rxgateway.utils.ChainingSyntax
 
 import scala.util.Random
 
-object ShapeGenerator {
+object ShapeGenerator extends ChainingSyntax {
   private val MinNumberOfSides =
     3
 
@@ -43,8 +44,19 @@ object ShapeGenerator {
       rotation = randomWithinRange(MinRotation, MaxRotation).toFloat
     )
 
-  def makeATetrisShape: TetrisShape =
-    TetrisShape()
+  def makeATetrisShape(dropSpots: Seq[Int]): TetrisShape =
+    dropSpots
+      .isEmpty
+      .pipe {
+        case true =>
+          makeATetrisShape(0)
+
+        case false =>
+          makeATetrisShape(dropSpots(randomWithinRange(0, dropSpots.length - 1)))
+      }
+
+  def makeATetrisShape(dropSpot: Int): TetrisShape =
+    TetrisShape(Some(makeAShape), dropSpot, animate = true)
 
   private def randomWithinRange(min: Int, max: Int): Int =
     min + (new Random).nextInt((max - min) + 1)
