@@ -66,7 +66,9 @@ case class ShapeServiceImpl() extends ShapeService {
   def getSomeTetrisShapes(in: GetSomeTetrisShapes): Source[TetrisShape, NotUsed] = {
     Source.empty[TetrisShape]
     Source(in.startingIndex.to(in.startingIndex+in.numberOfShapes)).map { _ ⇒
-      ShapeGenerator.makeATetrisShape }
+      Thread.sleep(in.intervalMs)
+      ShapeGenerator.makeATetrisShape
+    }
   }
 
   def releaseShapes(in: ReleaseShapes, metadata: Metadata): Future[ShapeServiceResult] =
