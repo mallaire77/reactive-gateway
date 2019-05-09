@@ -14,6 +14,15 @@ lazy val api =
     .enablePlugins(ReactificPlugin)
     .settings(commonSettings)
 
+lazy val client =
+  (project in file("client"))
+    .dependsOn(api)
+    .enablePlugins(ReactificPlugin)
+    .enablePlugins(AkkaGrpcPlugin)
+    .enablePlugins(JavaAgent)
+    .enablePlugins(JavaAppPackaging)
+    .settings(commonSettings)
+
 lazy val server =
   (project in file("server"))
     .dependsOn(api)
@@ -38,4 +47,4 @@ lazy val mobile =
 lazy val root = 
   (project in file("."))
     .settings(name := "reactive-gateway")
-    .aggregate(api, server, web, mobile)
+    .aggregate(api, client, server, web, mobile)

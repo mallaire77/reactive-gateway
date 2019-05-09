@@ -3,7 +3,6 @@ package com.yoppworks.rxgateway.server
 import java.util.UUID
 
 import akka.NotUsed
-import akka.actor.ActorSystem
 import akka.stream.scaladsl.{Flow, Keep, Source}
 import akka.grpc.scaladsl.Metadata
 
@@ -64,8 +63,11 @@ case class ShapeServiceImpl() extends ShapeService {
       getSomeTetrisShapes(in)
     }()
 
-  def getSomeTetrisShapes(in: GetSomeTetrisShapes): Source[TetrisShape, NotUsed] =
+  def getSomeTetrisShapes(in: GetSomeTetrisShapes): Source[TetrisShape, NotUsed] = {
     Source.empty[TetrisShape]
+    Source(in.startingIndex.to(in.startingIndex+in.numberOfShapes)).map { _ ⇒
+      ShapeGenerator.makeATetrisShape }
+  }
 
   def releaseShapes(in: ReleaseShapes, metadata: Metadata): Future[ShapeServiceResult] =
     checkTransitionFuture(metadata, ToReleaseShapes) {
@@ -111,7 +113,7 @@ case class ShapeServiceImpl() extends ShapeService {
 object ShapeServiceImpl {
   case object InvalidStateChange extends Throwable with NoStackTrace
 
-  def ErrorHandler(implicit system: ActorSystem): PartialFunction[Throwable, Status] = {
+  def ErrorHandler: PartialFunction[Throwable, Status] = {
     case InvalidStateChange =>
       Status.FAILED_PRECONDITION
   }

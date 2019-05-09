@@ -41,7 +41,7 @@ class ShapeServer(
 
     // Infrastructure error mappers
     val registeredErrorHandlers: SystemErrorHandler = { system =>
-      ShapeServiceImpl.ErrorHandler(system)
+      ShapeServiceImpl.ErrorHandler
     }
 
     // Create service handlers
