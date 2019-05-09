@@ -34,7 +34,7 @@ case class ShapeServiceImpl() extends ShapeService {
   def getAShape(in: GetAShape, metadata: Metadata): Future[Shape] =
     checkTransitionFuture(metadata, ToReleaseShapes) {
       getAShape(in)
-    }(err = msg => Future.successful(ShapeGenerator.makeAShape))
+    }()
 
   def getAShape(in: GetAShape): Future[Shape] =
     Future.successful(ShapeGenerator.makeAShape)
