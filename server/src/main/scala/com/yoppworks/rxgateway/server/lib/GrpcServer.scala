@@ -71,12 +71,12 @@ trait GrpcServer extends ChainingSyntax {
       }
     }(request)
 
-  // Report successful binding
-  binding.foreach { binding =>
-    println(s"gRPC over HTTP/2 server bound to: ${binding.localAddress}")
+  def run(): Unit = {
+    // Report successful binding
+    binding.foreach {binding =>
+      println(s"gRPC over HTTP/2 server bound to: ${binding.localAddress}")
+    }
   }
-
-  binding
 }
 
 object GrpcServer {
