@@ -16,7 +16,7 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.control.NoStackTrace
 
-case class ShapeServiceImpl() extends ShapeService {
+case class ShapeServiceImpl() extends ShapeServicePowerApi {
   private type Message = String
 
   private final val HeaderKey = "X-USERNAME"
@@ -28,65 +28,50 @@ case class ShapeServiceImpl() extends ShapeService {
 
   def prepareShapes(in: PrepareShapes, metadata: Metadata): Future[ShapeServiceResult] =
     checkTransitionFuture(metadata, ToReleaseShapes) {
-      prepareShapes(in)
+      Future.successful(ShapeServiceResult(viable = true, SuccessfulShapeServiceResult))
     }(FailedShapeServiceResult)
-
-  def prepareShapes(in: PrepareShapes): Future[ShapeServiceResult] =
-    Future.successful(ShapeServiceResult(viable = true, SuccessfulShapeServiceResult))
 
   def getAShape(in: GetAShape, metadata: Metadata): Future[Shape] =
     checkTransitionFuture(metadata, ToReleaseShapes) {
-      getAShape(in)
+      Future.successful(ShapeGenerator.makeAShape)
     }()
-
-  def getAShape(in: GetAShape): Future[Shape] =
-    Future.successful(ShapeGenerator.makeAShape)
 
   def getSomeShapes(in: GetSomeShapes, metadata: Metadata): Source[Shape, NotUsed] =
     checkTransitionStream(metadata, ToReleaseShapes) {
-      getSomeShapes(in)
+      Source
+        .tick(0.seconds, in.intervalMs.milliseconds, ShapeGenerator.makeAShape)
+        .zipWithIndex
+        .takeWhile {
+          case (_, idx) =>
+            idx < in.numberOfShapes
+        }
+        .map {
+          case (shape, _) =>
+            shape
+        }
+        .viaMat(Flow[Shape].map(identity))(Keep.right)
     }()
-
-  def getSomeShapes(in: GetSomeShapes): Source[Shape, NotUsed] =
-    Source
-      .tick(0.seconds, in.intervalMs.milliseconds, ShapeGenerator.makeAShape)
-      .zipWithIndex
-      .takeWhile {
-        case (_, idx) =>
-          idx < in.numberOfShapes
-      }
-      .map {
-        case (shape, _) =>
-          shape
-      }
-      .viaMat(Flow[Shape].map(identity))(Keep.right)
 
   def getSomeTetrisShapes(in: GetSomeTetrisShapes, metadata: Metadata): Source[TetrisShape, NotUsed] =
     checkTransitionStream(metadata, ToReleaseShapes) {
-      getSomeTetrisShapes(in)
+      Source
+        .tick(0.seconds, in.intervalMs.milliseconds, ShapeGenerator.makeATetrisShape(in.dropSpots))
+        .zipWithIndex
+        .takeWhile {
+          case (_, idx) =>
+            idx + in.startingIndex < in.startingIndex + in.numberOfShapes
+        }
+        .map {
+          case (shape, _) =>
+            shape
+        }
+        .viaMat(Flow[TetrisShape].map(identity))(Keep.right)
     }()
-
-  def getSomeTetrisShapes(in: GetSomeTetrisShapes): Source[TetrisShape, NotUsed] =
-    Source
-      .tick(0.seconds, in.intervalMs.milliseconds, ShapeGenerator.makeATetrisShape(in.dropSpots))
-      .zipWithIndex
-      .takeWhile {
-        case (_, idx) =>
-          idx + in.startingIndex < in.startingIndex + in.numberOfShapes
-      }
-      .map {
-        case (shape, _) =>
-          shape
-      }
-      .viaMat(Flow[TetrisShape].map(identity))(Keep.right)
 
   def releaseShapes(in: ReleaseShapes, metadata: Metadata): Future[ShapeServiceResult] =
     checkTransitionFuture(metadata, ToReleaseShapes) {
-      releaseShapes(in)
+      Future.successful(ShapeServiceResult(viable = true, SuccessfulShapeServiceResult))
     }(FailedShapeServiceResult)
-
-  def releaseShapes(in: ReleaseShapes): Future[ShapeServiceResult] =
-    Future.successful(ShapeServiceResult(viable = true, SuccessfulShapeServiceResult))
 
   private def checkTransitionStream[T](
     metadata: Metadata,

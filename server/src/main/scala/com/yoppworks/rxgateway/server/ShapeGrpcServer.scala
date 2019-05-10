@@ -2,10 +2,8 @@ package com.yoppworks.rxgateway.server
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-
 import com.typesafe.config.ConfigFactory
-
-import com.yoppworks.rxgateway.api.ShapeServiceHandler
+import com.yoppworks.rxgateway.api.{ShapeServiceHandler, ShapeServicePowerApiHandler}
 import com.yoppworks.rxgateway.server.lib.GrpcServer
 
 import scala.concurrent.ExecutionContext
@@ -30,5 +28,5 @@ object ShapeGrpcServer extends GrpcServer with App {
     _ => ShapeServiceImpl.RejectionHandler
 
   lazy val GrpcHandler =
-    errorHandler => ShapeServiceHandler.partial(ShapeServiceImpl(), eHandler = errorHandler)
+    errorHandler => ShapeServicePowerApiHandler.partial(ShapeServiceImpl(), eHandler = errorHandler)
 }
