@@ -61,8 +61,8 @@ object ShapeClient {
         println(s"GetSomeTetrisShapes failed: ${exception.getMessage}")
         sys.terminate()
 
-      case Success(x) ⇒
-        println("Done")
+      case Success(_) ⇒
+        println(s"Done")
         sys.terminate()
     }
   }
