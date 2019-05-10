@@ -4,6 +4,7 @@ import akka.actor.ActorSystem
 import akka.grpc.scaladsl.GrpcExceptionHandler
 import akka.http.scaladsl.{Http, HttpConnectionContext}
 import akka.http.scaladsl.UseHttp2.Always
+import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.model.Uri.Path
 import akka.http.scaladsl.model.Uri.Path.Segment
 import akka.http.scaladsl.model.{HttpEntity, HttpRequest, HttpResponse}
@@ -48,32 +49,47 @@ trait GrpcServer extends ChainingSyntax {
       port = port,
       connectionContext = HttpConnectionContext(http2 = Always))
 
-  private def logRequest(routes: HttpRequest => Future[HttpResponse])(request: HttpRequest): Future[HttpResponse] =
-    System.currentTimeMillis.pipe { start =>
-      routes(request).map { response =>
-        system.log.info {
-          s"request_uri=${request.uri} " +
-            s"request_method=${request.method.value} " +
-            s"request_headers=${request.headers.mkString("(", ", ", ")")} " +
-            s"""response_status="${response.status}" """ +
-            s"""response_type="${response.entity.contentType}" """ +
-            s"epoch=${System.currentTimeMillis - start}"
-        }
+  private def logRequest(routes: HttpRequest => Future[HttpResponse]): HttpRequest => Future[HttpResponse] =
+    request =>
+      System.currentTimeMillis.pipe { start =>
+        routes(request).map { response =>
+          system.log.info {
+            s"request_uri=${request.uri} " +
+              s"request_method=${request.method.value} " +
+              s"request_headers=${request.headers.mkString("(", ", ", ")")} " +
+              s"""response_status="${response.status}" """ +
+              s"""response_type="${response.entity.contentType}" """ +
+              s"epoch=${System.currentTimeMillis - start}"
+          }
 
-        response
+          response
+        }
+      }
+
+  private def mapResponse(routes: HttpRequest => Future[HttpResponse]): HttpRequest => Future[HttpResponse] =
+    request =>
+      routes(request).map { response =>
+        val encodingHeader =
+          `Content-Encoding`(HttpEncodings.gzip)
+
+        val headers =
+          Seq(encodingHeader)
+
+        response.mapHeaders(_ ++ headers)
+      }
+
+  private def handle: HttpRequest => Future[HttpResponse] =
+    logRequest {
+      mapResponse { request =>
+        request.uri.path match {
+          case Path.Slash(Segment("ping", Path.Empty)) =>
+            Future.successful(HttpResponse(entity = HttpEntity("Pong!")))
+
+          case _ =>
+            innerHandler(request)
+        }
       }
     }
-
-  private def handle(request: HttpRequest): Future[HttpResponse] =
-    logRequest { request =>
-      request.uri.path match {
-        case Path.Slash(Segment("ping", Path.Empty)) =>
-          Future.successful(HttpResponse(entity = HttpEntity("Pong!")))
-
-        case _ =>
-          innerHandler(request)
-      }
-    }(request)
 
   def run()(implicit system: ActorSystem): Unit = {
     // Report successful binding
