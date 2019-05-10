@@ -3,6 +3,7 @@ package com.yoppworks.rxgateway.server
 import java.util.UUID
 
 import akka.NotUsed
+import akka.actor.ActorSystem
 import akka.stream.scaladsl.{Flow, Keep, Source}
 import akka.grpc.scaladsl.Metadata
 
@@ -27,17 +28,22 @@ case class ShapeServiceImpl() extends ShapeServicePowerApi {
     msg => Future.successful(ShapeServiceResult(viable = false, msg))
 
   def prepareShapes(in: PrepareShapes, metadata: Metadata): Future[ShapeServiceResult] =
-    checkTransitionFuture(metadata, ToReleaseShapes) {
+    checkTransitionFuture(metadata, ToPrepareShapes) {
       Future.successful(ShapeServiceResult(viable = true, SuccessfulShapeServiceResult))
     }(FailedShapeServiceResult)
 
-  def getAShape(in: GetAShape, metadata: Metadata): Future[Shape] =
-    checkTransitionFuture(metadata, ToReleaseShapes) {
-      Future.successful(ShapeGenerator.makeAShape)
-    }()
+  def getAShape(in: GetAShape, metadata: Metadata): Future[Shape] = {
+    val state = ToGetAShape
 
-  def getSomeShapes(in: GetSomeShapes, metadata: Metadata): Source[Shape, NotUsed] =
-    checkTransitionStream(metadata, ToReleaseShapes) {
+    checkTransitionFuture(metadata, state) {
+      Future.successful(ShapeGenerator.makeAShape)
+    }(msg => throw InvalidStateChange(msg, state))
+  }
+
+  def getSomeShapes(in: GetSomeShapes, metadata: Metadata): Source[Shape, NotUsed] = {
+    val state = ToGetSomeShapes
+
+    checkTransitionStream(metadata, state) {
       Source
         .tick(0.seconds, in.intervalMs.milliseconds, ShapeGenerator.makeAShape)
         .zipWithIndex
@@ -50,10 +56,13 @@ case class ShapeServiceImpl() extends ShapeServicePowerApi {
             shape
         }
         .viaMat(Flow[Shape].map(identity))(Keep.right)
-    }()
+    }(msg => throw InvalidStateChange(msg, state))
+  }
 
-  def getSomeTetrisShapes(in: GetSomeTetrisShapes, metadata: Metadata): Source[TetrisShape, NotUsed] =
-    checkTransitionStream(metadata, ToReleaseShapes) {
+  def getSomeTetrisShapes(in: GetSomeTetrisShapes, metadata: Metadata): Source[TetrisShape, NotUsed] = {
+    val state = ToGetSomeTetrisShapes
+
+    checkTransitionStream(metadata, state) {
       Source
         .tick(0.seconds, in.intervalMs.milliseconds, ShapeGenerator.makeATetrisShape(in.dropSpots))
         .zipWithIndex
@@ -66,17 +75,21 @@ case class ShapeServiceImpl() extends ShapeServicePowerApi {
             shape
         }
         .viaMat(Flow[TetrisShape].map(identity))(Keep.right)
-    }()
+    }(msg => throw InvalidStateChange(msg, state))
+  }
 
-  def releaseShapes(in: ReleaseShapes, metadata: Metadata): Future[ShapeServiceResult] =
-    checkTransitionFuture(metadata, ToReleaseShapes) {
+  def releaseShapes(in: ReleaseShapes, metadata: Metadata): Future[ShapeServiceResult] = {
+    val state = ToReleaseShapes
+
+    checkTransitionFuture(metadata, state) {
       Future.successful(ShapeServiceResult(viable = true, SuccessfulShapeServiceResult))
-    }(FailedShapeServiceResult)
+    }(msg => throw InvalidStateChange(msg, state))
+  }
 
   private def checkTransitionStream[T](
     metadata: Metadata,
     transition: ProtocolStateTransition
-  )(fn: => Source[T, NotUsed])(err: String => Source[T, NotUsed] = (_: String) => throw InvalidStateChange): Source[T, NotUsed] =
+  )(fn: => Source[T, NotUsed])(err: String => Source[T, NotUsed]): Source[T, NotUsed] =
     Source
       .fromFuture(tryTransition(idFromMetadata(metadata), transition))
       .flatMapConcat {
@@ -90,7 +103,7 @@ case class ShapeServiceImpl() extends ShapeServicePowerApi {
   private def checkTransitionFuture[T](
     metadata: Metadata,
     transition: ProtocolStateTransition
-  )(fn: => Future[T])(err: String => Future[T] = (_: String) => throw InvalidStateChange): Future[T] =
+  )(fn: => Future[T])(err: String => Future[T]): Future[T] =
     tryTransition(idFromMetadata(metadata), transition)
       .flatMap {
         case None ⇒
@@ -107,10 +120,11 @@ case class ShapeServiceImpl() extends ShapeServicePowerApi {
 }
 
 object ShapeServiceImpl {
-  case object InvalidStateChange extends Throwable with NoStackTrace
+  case class InvalidStateChange(message: String, toState: ProtocolStateTransition) extends Throwable with NoStackTrace
 
-  def RejectionHandler: PartialFunction[Throwable, Status] = {
-    case InvalidStateChange =>
+  def RejectionHandler(implicit system: ActorSystem): PartialFunction[Throwable, Status] = {
+    case InvalidStateChange(message, toState) =>
+      system.log.error(s"""message="Invalid state transition, details: $message" toState="$toState"""")
       Status.FAILED_PRECONDITION
   }
 }

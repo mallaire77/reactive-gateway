@@ -51,8 +51,12 @@ trait GrpcServer extends ChainingSyntax {
   private def logRequest(routes: HttpRequest => Future[HttpResponse])(request: HttpRequest): Future[HttpResponse] =
     System.currentTimeMillis.pipe { start =>
       routes(request).map { response =>
-        println {
-          s"request=$request " +
+        system.log.info {
+          s"request_uri=${request.uri} " +
+            s"request_method=${request.method.value} " +
+            s"request_headers=${request.headers.mkString("(", ", ", ")")} " +
+            s"""response_status="${response.status}" """ +
+            s"""response_type="${response.entity.contentType}" """ +
             s"epoch=${System.currentTimeMillis - start}"
         }
 
@@ -71,10 +75,10 @@ trait GrpcServer extends ChainingSyntax {
       }
     }(request)
 
-  def run(): Unit = {
+  def run()(implicit system: ActorSystem): Unit = {
     // Report successful binding
     binding.foreach {binding =>
-      println(s"gRPC over HTTP/2 server bound to: ${binding.localAddress}")
+      system.log.info(s"gRPC over HTTP/2 server bound to: ${binding.localAddress}")
     }
   }
 }
