@@ -44,8 +44,8 @@ object ShapeClient {
         r3 <-
           adornStream(client.getSomeTetrisShapes())
             .invokeWithMetadata(GetSomeTetrisShapes(0, 10, 200))
-            .runForeach { shape: TetrisShape ⇒
-              println(s"Shape: $shape")
+            .runForeach { shape: TetrisShapeResult ⇒
+              println(s"TetrisShapeResult: $shape")
               System.out.flush()
             }
         r4 ← adornSingle(client.releaseShapes()).invoke(ReleaseShapes())

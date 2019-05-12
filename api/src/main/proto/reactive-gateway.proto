@@ -10,11 +10,6 @@ message PrepareShapes {
   uint32 numberOfShapesToPrepare = 1;
 }
 
-message ShapeServiceResult {
-  bool viable = 1;
-  string error = 2;
-}
-
 message GetAShape {
   uint32 index = 1;
 }
@@ -66,10 +61,27 @@ message ReleaseShapes {
 
 }
 
+message Result {
+  bool viable = 1;
+  string error = 2;
+}
+
+message ShapeResult {
+  bool viable = 1;
+  string error = 2;
+  Shape shape = 3;
+}
+
+message TetrisShapeResult {
+  bool viable = 1;
+  string error = 2;
+  TetrisShape shape = 3;
+}
+
 service ShapeService {
-  rpc prepareShapes(PrepareShapes) returns (ShapeServiceResult) {}
-  rpc getAShape(GetAShape) returns (Shape) {}
-  rpc getSomeShapes(GetSomeShapes) returns (stream Shape) {}
-  rpc getSomeTetrisShapes(GetSomeTetrisShapes) returns (stream TetrisShape);
-  rpc releaseShapes(ReleaseShapes) returns (ShapeServiceResult);
+  rpc prepareShapes(PrepareShapes) returns (Result) {}
+  rpc getAShape(GetAShape) returns (ShapeResult) {}
+  rpc getSomeShapes(GetSomeShapes) returns (stream ShapeResult) {}
+  rpc getSomeTetrisShapes(GetSomeTetrisShapes) returns (stream TetrisShapeResult);
+  rpc releaseShapes(ReleaseShapes) returns (Result);
 }

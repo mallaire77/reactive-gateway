@@ -10,7 +10,6 @@ import akka.http.scaladsl.model.Uri.Path.Segment
 import akka.http.scaladsl.model.{HttpEntity, HttpRequest, HttpResponse}
 import akka.stream.ActorMaterializer
 
-import com.yoppworks.rxgateway.server.lib.GrpcServer.SystemRejectionHandler
 import com.yoppworks.rxgateway.utils.ChainingSyntax
 
 import io.grpc.Status
@@ -29,13 +28,16 @@ trait GrpcServer extends ChainingSyntax {
   def interface: String
 
   def port: Int
-
+  
+  final type SystemRejectionHandler =
+    ActorSystem => PartialFunction[Throwable, Status]
+  
   def GrpcHandler: SystemRejectionHandler => HttpRequest => Future[HttpResponse]
 
   def GrpcRejectionHandlers: SystemRejectionHandler
 
   private lazy val innerHandler =
-    GrpcHandler { system =>
+    GrpcHandler { system: ActorSystem =>
       GrpcRejectionHandlers(system)
         .orElse(GrpcRejectionHandler.errorMapper(system))
         .orElse(GrpcExceptionHandler.defaultMapper(system))
@@ -97,8 +99,4 @@ trait GrpcServer extends ChainingSyntax {
       system.log.info(s"gRPC over HTTP/2 server bound to: ${binding.localAddress}")
     }
   }
-}
-
-object GrpcServer {
-  type SystemRejectionHandler = ActorSystem => PartialFunction[Throwable, Status]
 }

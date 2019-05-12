@@ -3,7 +3,7 @@ package com.yoppworks.rxgateway.server
 import scala.concurrent.{ExecutionContext, Future}
 
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
-import akka.actor.typed.{ActorRef, ActorSystem, Behavior, Terminated}
+import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
 import akka.actor.typed.scaladsl.AskPattern._
 import akka.actor.typed.receptionist.Receptionist
 import akka.actor.typed.receptionist.ServiceKey
@@ -105,7 +105,7 @@ object ShapeEnforcedProtocol {
         replyTo => Receptionist.find[ CheckTransition ](serviceKey, replyTo)
       }
     }
-    futureListing.map { listing ⇒
+    val _ = futureListing.map { listing ⇒
       val actorRefSet = listing.serviceInstances[ CheckTransition ](
         listing.key.asInstanceOf[ ServiceKey[ CheckTransition ] ]
       )
