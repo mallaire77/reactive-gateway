@@ -24,23 +24,29 @@ case class ShapeServiceImpl() extends ShapeServicePowerApi {
 
   private final val SuccessfulShapeServiceResult = "Success"
 
-  private final val FailedShapeServiceResult: Message => Future[ShapeServiceResult] =
-    msg => Future.successful(ShapeServiceResult(viable = false, msg))
+  private final val FailedShapeServiceResult: Message => Future[Result] =
+    msg => Future.successful(Result(viable = false, msg))
 
-  def prepareShapes(in: PrepareShapes, metadata: Metadata): Future[ShapeServiceResult] =
+  def prepareShapes(in: PrepareShapes, metadata: Metadata): Future[Result] =
     checkTransitionFuture(metadata, ToPrepareShapes) {
-      Future.successful(ShapeServiceResult(viable = true, SuccessfulShapeServiceResult))
+      Future.successful(Result(viable = true, SuccessfulShapeServiceResult))
     }(FailedShapeServiceResult)
 
-  def getAShape(in: GetAShape, metadata: Metadata): Future[Shape] = {
+  def getAShape(in: GetAShape, metadata: Metadata): Future[ShapeResult] = {
     val state = ToGetAShape
 
     checkTransitionFuture(metadata, state) {
-      Future.successful(ShapeGenerator.makeAShape)
-    }(msg => throw InvalidStateChange(msg, state))
+      Future.successful(ShapeResult(viable=true,
+        SuccessfulShapeServiceResult, Some(ShapeGenerator.makeAShape)
+      ))
+    }(msg =>
+      Future.successful(ShapeResult(viable=false, msg))
+    )
   }
 
-  def getSomeShapes(in: GetSomeShapes, metadata: Metadata): Source[Shape, NotUsed] = {
+  def getSomeShapes(
+    in: GetSomeShapes, metadata: Metadata
+  ): Source[ShapeResult, NotUsed] = {
     val state = ToGetSomeShapes
 
     checkTransitionStream(metadata, state) {
@@ -53,13 +59,15 @@ case class ShapeServiceImpl() extends ShapeServicePowerApi {
         }
         .map {
           case (shape, _) =>
-            shape
+            ShapeResult(
+              viable=true, error=SuccessfulShapeServiceResult, Some(shape)
+            )
         }
-        .viaMat(Flow[Shape].map(identity))(Keep.right)
+        .viaMat(Flow[ShapeResult].map(identity))(Keep.right)
     }(msg => throw InvalidStateChange(msg, state))
   }
 
-  def getSomeTetrisShapes(in: GetSomeTetrisShapes, metadata: Metadata): Source[TetrisShape, NotUsed] = {
+  def getSomeTetrisShapes(in: GetSomeTetrisShapes, metadata: Metadata): Source[TetrisShapeResult, NotUsed] = {
     val state = ToGetSomeTetrisShapes
 
     checkTransitionStream(metadata, state) {
@@ -72,17 +80,17 @@ case class ShapeServiceImpl() extends ShapeServicePowerApi {
         }
         .map {
           case (shape, _) =>
-            shape
+            TetrisShapeResult(viable=true, "", Some(shape))
         }
-        .viaMat(Flow[TetrisShape].map(identity))(Keep.right)
+        .viaMat(Flow[TetrisShapeResult].map(identity))(Keep.right)
     }(msg => throw InvalidStateChange(msg, state))
   }
 
-  def releaseShapes(in: ReleaseShapes, metadata: Metadata): Future[ShapeServiceResult] = {
+  def releaseShapes(in: ReleaseShapes, metadata: Metadata): Future[Result] = {
     val state = ToReleaseShapes
 
     checkTransitionFuture(metadata, state) {
-      Future.successful(ShapeServiceResult(viable = true, SuccessfulShapeServiceResult))
+      Future.successful(Result(viable = true, SuccessfulShapeServiceResult))
     }(msg => throw InvalidStateChange(msg, state))
   }
 
