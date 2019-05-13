@@ -46,16 +46,16 @@ const int DEFAULT_HEIGHT = 100;
 
 - (UIView *) createWithShape:(Shape *) shape{
     ShapeType shapeType = shape.numberOfSides;
-    float edgeRed = shape.edgeColor.red;
-    float edgeGreen = shape.edgeColor.green;
-    float edgeBlue = shape.edgeColor.blue;
+    float edgeRed = shape.edgeColor.red/255;
+    float edgeGreen = shape.edgeColor.green/255;
+    float edgeBlue = shape.edgeColor.blue/255;
     CGColorRef edgeColor = [[[UIColor alloc]initWithRed:edgeRed
                                                   green:edgeGreen
                                                    blue:edgeBlue
                                                   alpha:1.0] CGColor];
-    float fillRed = shape.fillColor.red;
-    float fillGreen = shape.fillColor.green;
-    float fillBlue = shape.fillColor.blue;
+    float fillRed = shape.fillColor.red/255;
+    float fillGreen = shape.fillColor.green/255;
+    float fillBlue = shape.fillColor.blue/255;
     CGColorRef fillColor = [[[UIColor alloc]initWithRed:fillRed
                                                   green:fillGreen
                                                    blue:fillBlue
