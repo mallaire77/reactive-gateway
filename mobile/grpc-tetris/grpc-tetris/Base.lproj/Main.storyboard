@@ -31,7 +31,19 @@
                             </button>
                             <view clipsSubviews="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="9K9-kl-ssS">
                                 <rect key="frame" x="35" y="54" width="337" height="722"/>
+                                <subviews>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Pending Shapes: 0" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="T7Q-gM-YfK">
+                                        <rect key="frame" x="184" y="8" width="144" height="21"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                        <nil key="textColor"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                </subviews>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <constraints>
+                                    <constraint firstItem="T7Q-gM-YfK" firstAttribute="top" secondItem="9K9-kl-ssS" secondAttribute="topMargin" id="2u9-ul-wmV"/>
+                                    <constraint firstAttribute="trailing" secondItem="T7Q-gM-YfK" secondAttribute="trailing" constant="9" id="bHU-Q2-kyE"/>
+                                </constraints>
                             </view>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Number of Shapes : " textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="W7W-ms-w5U">
                                 <rect key="frame" x="35" y="788" width="199" height="21"/>
@@ -63,6 +75,7 @@
                     <connections>
                         <outlet property="numberOfShapesLabel" destination="W7W-ms-w5U" id="r08-of-kWV"/>
                         <outlet property="numberOfShapesSlider" destination="ldz-9e-AgI" id="lrT-CY-eoV"/>
+                        <outlet property="pendingShapesLabel" destination="T7Q-gM-YfK" id="Y6a-z5-IPQ"/>
                         <outlet property="requestButton" destination="J9w-Iu-StZ" id="uaY-jB-wUr"/>
                         <outlet property="shapeDrawingView" destination="9K9-kl-ssS" id="7zt-Nd-1Tf"/>
                     </connections>

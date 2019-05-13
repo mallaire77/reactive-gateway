@@ -30,11 +30,13 @@
 
 -(id)dequeue {
     id object = [self.backingArray lastObject];
-    [self.backingArray removeObject:object];
+    [self.backingArray removeObjectAtIndex:[self size]-1];
     return object;
 }
 -(BOOL)isEmpty{
     return self.backingArray.count == 0;
 }
-
+-(int) size{
+    return (int)self.backingArray.count;
+}
 @end

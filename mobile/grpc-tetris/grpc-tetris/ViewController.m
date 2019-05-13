@@ -16,16 +16,21 @@
 
 static NSString * const kHostAddress = @"localhost:50051";
 static NSString* const NUMBER_OF_SHAPES_LBL = @"Number of Shapes : %d";
+static NSString* const PENDING_SHAPES_LBL= @"Pending Shapes: %d";
+
 @interface ViewController ()
 @property (weak, nonatomic) IBOutlet UIButton *requestButton;
 @property(retain) NSNumber *numberOfShapes;
 @property(atomic) Queue *queue;
-@property(atomic) NSInteger *pendingShapesToBeDraw;
+@property(atomic) int pendingShapesToBeDraw;
+@property(atomic) int receiveShapes;
+
 @property(retain) ShapeFactory *shapeFactory;
 @property(retain) UIView *lastShapeView;
 @property (weak, nonatomic) IBOutlet UIView *shapeDrawingView;
 @property (weak, nonatomic) IBOutlet UILabel *numberOfShapesLabel;
 @property (weak, nonatomic) IBOutlet UISlider *numberOfShapesSlider;
+@property (weak, nonatomic) IBOutlet UILabel *pendingShapesLabel;
 
 @end
 
@@ -50,6 +55,7 @@ static NSString* const NUMBER_OF_SHAPES_LBL = @"Number of Shapes : %d";
     [self.shapeDrawingView.layer setShadowOpacity:0.8];
     [self.shapeDrawingView.layer setShadowRadius:3.0];
     [self.shapeDrawingView.layer setShadowOffset:CGSizeMake(2.0, 2.0)];
+    self.pendingShapesLabel.hidden = YES;
 }
 
 - (void) setNumberOfShapesToRequest:(NSNumber *)numberOfShapes{
@@ -63,7 +69,7 @@ static NSString* const NUMBER_OF_SHAPES_LBL = @"Number of Shapes : %d";
 }
 
 -(void) drawShapeWith:(TetrisShape *) tetrisShape andAnimationDuration:(float) duration{
-    NSLog(@"Creating Shape %d...",tetrisShape.shape.numberOfSides);
+    NSLog(@"Creating Shape Type %d... Pending:%d",tetrisShape.shape.numberOfSides,self.pendingShapesToBeDraw);
     [[NSOperationQueue mainQueue] addOperationWithBlock:^ {
     UIView *view =[self.shapeFactory createWithShape:tetrisShape.shape];
         if(view!=nil){
@@ -84,9 +90,12 @@ static NSString* const NUMBER_OF_SHAPES_LBL = @"Number of Shapes : %d";
                                                                finalPosition);
                                  }
                                  completion:^(BOOL finished){
-                                     self.pendingShapesToBeDraw--;
+                                     
                                  }];
         }
+        self.pendingShapesToBeDraw--;
+        int value = self.pendingShapesToBeDraw;
+        self.pendingShapesLabel.text = [NSString stringWithFormat:PENDING_SHAPES_LBL,value];
     }];
 }
 
@@ -94,19 +103,24 @@ static NSString* const NUMBER_OF_SHAPES_LBL = @"Number of Shapes : %d";
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         @autoreleasepool {
             while(self.pendingShapesToBeDraw>0){
-                NSLog(@"Refreshing Shape ...");
+                NSLog(@"Refreshing Shape ... Queue Size: %d",self.queue.size);
                 if(!self.queue.isEmpty){
                     TetrisShape *tetrisShape = self.queue.dequeue;
+                     NSLog(@"Pending Queue Size: %d",self.queue.size);
                     [self drawShapeWith:tetrisShape andAnimationDuration:1.0];
                 }
-                [NSThread sleepForTimeInterval:3];
+                [NSThread sleepForTimeInterval:2.000];
             }
             NSLog(@"All Shapes have been done...");
+            [[NSOperationQueue mainQueue] addOperationWithBlock:^ {
+                self.pendingShapesLabel.hidden = YES;
+            }];
         }
     });
 }
 
 - (IBAction)onStartBtnClicked:(id)sender {
+    self.receiveShapes = 0;
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         @autoreleasepool {
             NSLog(@"dispatching gRPC call");
@@ -119,7 +133,11 @@ static NSString* const NUMBER_OF_SHAPES_LBL = @"Number of Shapes : %d";
             }];
             request.startingIndex = 0;
             request.numberOfShapes = self.numberOfShapes.intValue;
+            NSLog(@"Requested shapes:%d",request.numberOfShapes);
             self.pendingShapesToBeDraw = request.numberOfShapes;
+            [[NSOperationQueue mainQueue] addOperationWithBlock:^ {
+                self.pendingShapesLabel.hidden = NO;
+            }];
             [self refreshShape];
             request.intervalMs = 2;
             request.dropSpotsArray = [GPBUInt32Array arrayWithValue:50];
@@ -128,10 +146,12 @@ static NSString* const NUMBER_OF_SHAPES_LBL = @"Number of Shapes : %d";
                     NSLog(@"Shape type : %d", response.shape.numberOfSides);
                     TetrisShape *tetrisShape = response;
                     [self.queue enqueue:tetrisShape];
+                    self.receiveShapes++;
                 }else{
                     [[NSOperationQueue mainQueue] addOperationWithBlock:^ {
                         self.requestButton.enabled = YES;
                     }];
+                    NSLog(@"Receive shapes:%d",self.receiveShapes);
                 }
             }];
         }

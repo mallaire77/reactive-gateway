@@ -15,6 +15,7 @@
 -(void)enqueue:(id)object;
 -(id)dequeue;
 -(BOOL)isEmpty;
+-(int)size;
 
 @end
 
