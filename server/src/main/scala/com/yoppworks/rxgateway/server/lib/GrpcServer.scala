@@ -71,6 +71,9 @@ trait GrpcServer extends ChainingSyntax {
   private def handle: HttpRequest => Future[HttpResponse] =
     logRequest { request =>
       request.uri.path match {
+        case Path.Slash(Path.Empty) | Path.Empty =>
+          Future.successful(HttpResponse(entity = HttpEntity("Akka Grpc w/ HTTP2 Demo")))
+
         case Path.Slash(Segment("ping", Path.Empty)) =>
           Future.successful(HttpResponse(entity = HttpEntity("Pong!")))
 
