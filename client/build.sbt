@@ -1,6 +1,6 @@
 name := "rx-gateway-client"
 
-codePackage := "com.yoppworks.rxgateway.client"
+//codePackage := "com.yoppworks.rxgateway.client"
 
 mainClass in (Compile, run) :=
   Some("com.yoppworks.rxgateway.client.ShapeClient")
