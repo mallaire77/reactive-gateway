@@ -1,6 +1,9 @@
-name := "rx-gateway-server"
+val Name =
+  "rx-gateway-server"
 
-codePackage := "com.yoppworks.rxgateway.server"
+name := Name
+
+//codePackage := "com.yoppworks.rxgateway.server"
 
 mainClass in (Compile, run) :=
   Some("com.yoppworks.rxgateway.server.ShapeGrpcServer")
