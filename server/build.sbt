@@ -3,7 +3,7 @@ name := "rx-gateway-server"
 codePackage := "com.yoppworks.rxgateway.server"
 
 mainClass in (Compile, run) :=
-  Some("com.yoppworks.rxgateway.server.ShapeServer")
+  Some("com.yoppworks.rxgateway.server.ShapeGrpcServer")
 
 javaAgents += "org.mortbay.jetty.alpn" % "jetty-alpn-agent" % "2.0.9" % "runtime;test"
 

@@ -81,12 +81,10 @@ object ShapeEnforcedProtocol {
    * `None` if the transition was permitted, or
    * `Some[String]` if there is an error message to report
    */
-  def tryTransition(id: String, transition: ProtocolStateTransition)
-  : Future[ErrorResult] = {
+  def tryTransition(id: String, transition: ProtocolStateTransition): Future[ErrorResult] =
     system ?[ErrorResult] { actorRef ⇒
       CheckTransition(id, transition, actorRef)
     }
-  }
   
   /**
    * An internal utility to find the actor,  or create it if necessary, and
@@ -95,35 +93,37 @@ object ShapeEnforcedProtocol {
    * @param check The message to dispatch
    * @param context The actor context
    */
-  private final def checkTransition(
-    check: CheckTransition
-  )(implicit context: ActorContext[_]
-  ) : Unit = {
-    val serviceKey = ServiceKey[ CheckTransition ](check.name)
-    val futureListing : Future[ Receptionist.Listing ] = {
+  private final def checkTransition(check: CheckTransition)(implicit context: ActorContext[_]): Unit = {
+    val serviceKey =
+      ServiceKey[CheckTransition](check.name)
+
+    val futureListing : Future[Receptionist.Listing] =
       context.system.receptionist ? {
-        replyTo => Receptionist.find[ CheckTransition ](serviceKey, replyTo)
+        replyTo => Receptionist.find[CheckTransition](serviceKey, replyTo)
       }
-    }
-    val _ = futureListing.map { listing ⇒
-      val actorRefSet = listing.serviceInstances[ CheckTransition ](
-        listing.key.asInstanceOf[ ServiceKey[ CheckTransition ] ]
-      )
-      val actorRef = if (actorRefSet.isEmpty) {
-        val ref = context.spawn(initialBehavior, serviceKey.id)
-        context.system.receptionist ! Receptionist.register(serviceKey, ref)
-        ref
-      } else {
-        actorRefSet.head
+
+    val _ =
+      futureListing.map { listing ⇒
+        val actorRefSet =
+          listing.serviceInstances[CheckTransition](listing.key.asInstanceOf[ServiceKey[CheckTransition]])
+
+        val actorRef =
+          if (actorRefSet.isEmpty) {
+            val ref =
+              context.spawn(initialBehavior, serviceKey.id)
+            context.system.receptionist ! Receptionist.register(serviceKey, ref)
+            ref
+          } else
+            actorRefSet.head
+
+        actorRef ! check
       }
-      actorRef ! check
-    }
   }
   
   // The initial behavior of the protocol enforcement actor ensuring that
   // only the ToPrepareShapes transition is permitted as the first transition.
   private def initialBehavior: Behavior[CheckTransition] = {
-    Behaviors.receive[ CheckTransition ] { (_, message ) ⇒
+    Behaviors.receive[CheckTransition] { (_, message ) ⇒
       message match {
         case CheckTransition(_, transition, replyTo) ⇒
           transition match {
