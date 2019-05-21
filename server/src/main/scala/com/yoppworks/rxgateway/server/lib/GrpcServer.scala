@@ -1,12 +1,15 @@
 package com.yoppworks.rxgateway.server.lib
 
 import akka.actor.ActorSystem
+
 import akka.grpc.scaladsl.GrpcExceptionHandler
+
 import akka.http.scaladsl.{Http, HttpConnectionContext}
-import akka.http.scaladsl.UseHttp2.Always
+import akka.http.scaladsl.UseHttp2.Negotiated
 import akka.http.scaladsl.model.Uri.Path
 import akka.http.scaladsl.model.Uri.Path.Segment
 import akka.http.scaladsl.model.{HttpEntity, HttpRequest, HttpResponse}
+
 import akka.stream.ActorMaterializer
 
 import com.yoppworks.rxgateway.utils.ChainingSyntax
@@ -48,7 +51,7 @@ trait GrpcServer extends ChainingSyntax {
       handle,
       interface = interface,
       port = port,
-      connectionContext = HttpConnectionContext(http2 = Always))
+      connectionContext = HttpConnectionContext(http2 = Negotiated))
 
   private def logRequest(route: HttpRequest => Future[HttpResponse]): HttpRequest => Future[HttpResponse] =
     request =>
