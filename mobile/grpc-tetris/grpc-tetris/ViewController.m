@@ -12,9 +12,10 @@
 #import <UIKit/UIKit.h>
 #import <GRPCClient/GRPCCall+ChannelArg.h>
 #import <GRPCClient/GRPCCall+Tests.h>
+#import <gRPC-RxLibrary/RxLibrary/GRXWriter+Immediate.h>
 #import <grpc-tetris/ReactiveGateway.pbrpc.h>
 
-static NSString * const kHostAddress = @"localhost:50051";
+static NSString * const kHostAddress = @"localhost:8080";
 static NSString* const NUMBER_OF_SHAPES_LBL = @"Number of Shapes : %d";
 static NSString* const PENDING_SHAPES_LBL= @"Pending Shapes: %d";
 
@@ -119,12 +120,35 @@ static NSString* const PENDING_SHAPES_LBL= @"Pending Shapes: %d";
     });
 }
 
-- (IBAction)onStartBtnClicked:(id)sender {
+-(void) prepareShapes{
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        @autoreleasepool {
+            NSLog(@"Preparing Shapes gRPC call");
+            PrepareShapes *request = [PrepareShapes message];
+            request.numberOfShapesToPrepare = self.numberOfShapes.intValue;
+            [GRPCCall useInsecureConnectionsForHost:kHostAddress];
+            [GRPCCall setDefaultCompressMethod:GRPCCompressNone forhost:@"localhost"];
+            [GRPCCall setUserAgentPrefix:@"ShapeService/1.0" forHost:kHostAddress];
+            
+            ShapeService *client = [[ShapeService alloc] initWithHost:kHostAddress];
+            GRPCProtoCall *call = [client RPCToprepareShapesWithRequest:request handler:^(Result *response,NSError *error) {
+                if(response.viable){
+                    [self getShapes];
+                }
+            }];
+            call.requestHeaders[@"X-USERNAME"] = @"ios-client";
+            [call start];
+        }
+    });
+}
+
+-(void) getShapes{
     self.receiveShapes = 0;
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         @autoreleasepool {
-            NSLog(@"dispatching gRPC call");
+            NSLog(@"Getting Shapes gRPC call");
             [GRPCCall useInsecureConnectionsForHost:kHostAddress];
+            [GRPCCall setDefaultCompressMethod:GRPCCompressNone forhost:@"localhost"];
             [GRPCCall setUserAgentPrefix:@"ShapeService/1.0" forHost:kHostAddress];
             ShapeService *client = [[ShapeService alloc] initWithHost:kHostAddress];
             GetSomeTetrisShapes *request = [GetSomeTetrisShapes message];
@@ -141,12 +165,15 @@ static NSString* const PENDING_SHAPES_LBL= @"Pending Shapes: %d";
             [self refreshShape];
             request.intervalMs = 2;
             request.dropSpotsArray = [GPBUInt32Array arrayWithValue:50];
-            [client getSomeTetrisShapesWithRequest:request eventHandler:^(BOOL done,TetrisShape *response,NSError *error) {
+            GRPCProtoCall *call =  [client RPCTogetSomeTetrisShapesWithRequest:request eventHandler:^(BOOL done,TetrisShapeResult *response,NSError *error) {
                 if(!done){
-                    NSLog(@"Shape type : %d", response.shape.numberOfSides);
-                    TetrisShape *tetrisShape = response;
-                    [self.queue enqueue:tetrisShape];
-                    self.receiveShapes++;
+                    if(response.viable){
+                        NSLog(@"Shape type : %d", response.shape.shape.numberOfSides);
+                        TetrisShape *tetrisShape = response.shape;
+                        [self.queue enqueue:tetrisShape];
+                        self.receiveShapes++;
+                    }
+                    
                 }else{
                     [[NSOperationQueue mainQueue] addOperationWithBlock:^ {
                         self.requestButton.enabled = YES;
@@ -154,8 +181,14 @@ static NSString* const PENDING_SHAPES_LBL= @"Pending Shapes: %d";
                     NSLog(@"Receive shapes:%d",self.receiveShapes);
                 }
             }];
+            call.requestHeaders[@"X-USERNAME"] = @"ios-client";
+            [call start];
         }
     });
+}
+
+- (IBAction)onStartBtnClicked:(id)sender {
+    [self prepareShapes];
 }
 
 @end
