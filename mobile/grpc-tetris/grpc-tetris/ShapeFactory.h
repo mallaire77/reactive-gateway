@@ -11,7 +11,7 @@
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
 #import <grpc-tetris/ReactiveGateway.pbrpc.h>
-
+#import <grpc_tetris-Swift.h>
 typedef enum shapeType
 {
     CIRCLE = 0,
