@@ -44,7 +44,8 @@ case class ShapeServiceImpl() extends ShapeServicePowerApi with ChainingSyntax {
     ToGetSomeShapes.pipe { state =>
       checkTransitionStream(metadata, state) {
         Source
-          .tick(0.seconds, in.intervalMs.milliseconds, ShapeGenerator.makeAShape)
+          .tick(0.seconds, in.intervalMs.milliseconds, ())
+          .map(_ => ShapeGenerator.makeAShape)
           .zipWithIndex
           .takeWhile {
             case (_, idx) =>
@@ -52,7 +53,7 @@ case class ShapeServiceImpl() extends ShapeServicePowerApi with ChainingSyntax {
           }
           .map {
             case (shape, _) =>
-              ShapeResult(viable = true, error = SuccessfulShapeServiceResult, Some(shape))
+              ShapeResult(viable = true, SuccessfulShapeServiceResult, Some(shape))
           }
           .viaMat(Flow[ShapeResult].map(identity))(Keep.right)
       }(msg => throw InvalidStateChange(msg, state))
@@ -62,7 +63,8 @@ case class ShapeServiceImpl() extends ShapeServicePowerApi with ChainingSyntax {
     ToGetSomeTetrisShapes.pipe { state =>
       checkTransitionStream(metadata, state) {
         Source
-          .tick(0.seconds, in.intervalMs.milliseconds, ShapeGenerator.makeATetrisShape(in.dropSpots))
+          .tick(0.seconds, in.intervalMs.milliseconds, ())
+          .map(_ => ShapeGenerator.makeATetrisShape(in.dropSpots))
           .zipWithIndex
           .takeWhile {
             case (_, idx) =>
@@ -70,7 +72,7 @@ case class ShapeServiceImpl() extends ShapeServicePowerApi with ChainingSyntax {
           }
           .map {
             case (shape, _) =>
-              TetrisShapeResult(viable=true, "", Some(shape))
+              TetrisShapeResult(viable = true, SuccessfulShapeServiceResult, Some(shape))
           }
           .viaMat(Flow[TetrisShapeResult].map(identity))(Keep.right)
       }(msg => throw InvalidStateChange(msg, state))

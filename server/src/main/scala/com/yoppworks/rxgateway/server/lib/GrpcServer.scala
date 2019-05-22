@@ -1,15 +1,10 @@
 package com.yoppworks.rxgateway.server.lib
 
 import akka.actor.ActorSystem
-
 import akka.grpc.scaladsl.GrpcExceptionHandler
-
 import akka.http.scaladsl.{Http, HttpConnectionContext}
-import akka.http.scaladsl.UseHttp2.Negotiated
-import akka.http.scaladsl.model.Uri.Path
-import akka.http.scaladsl.model.Uri.Path.Segment
-import akka.http.scaladsl.model.{HttpEntity, HttpRequest, HttpResponse}
-
+import akka.http.scaladsl.UseHttp2.Always
+import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.stream.ActorMaterializer
 
 import com.yoppworks.rxgateway.utils.ChainingSyntax
@@ -51,7 +46,7 @@ trait GrpcServer extends ChainingSyntax {
       handle,
       interface = interface,
       port = port,
-      connectionContext = HttpConnectionContext(http2 = Negotiated))
+      connectionContext = HttpConnectionContext(http2 = Always))
 
   private def logRequest(route: HttpRequest => Future[HttpResponse]): HttpRequest => Future[HttpResponse] =
     request =>
@@ -73,16 +68,7 @@ trait GrpcServer extends ChainingSyntax {
 
   private def handle: HttpRequest => Future[HttpResponse] =
     logRequest { request =>
-      request.uri.path match {
-        case Path.Slash(Path.Empty) | Path.Empty =>
-          Future.successful(HttpResponse(entity = HttpEntity("Akka Grpc w/ HTTP2 Demo")))
-
-        case Path.Slash(Segment("ping", Path.Empty)) =>
-          Future.successful(HttpResponse(entity = HttpEntity("Pong!")))
-
-        case _ =>
-          innerHandler(request)
-      }
+      innerHandler(request)
     }
 
   def run()(implicit system: ActorSystem): Unit = {

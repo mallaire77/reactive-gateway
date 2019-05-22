@@ -5,7 +5,7 @@ import akka.stream.ActorMaterializer
 
 import com.typesafe.config.ConfigFactory
 
-import com.yoppworks.rxgateway.api.ShapeServicePowerApiHandler
+import com.yoppworks.rxgateway.api.{ShapeService, ShapeServicePowerApiHandler}
 import com.yoppworks.rxgateway.server.lib.GrpcServer
 
 import scala.concurrent.ExecutionContext
