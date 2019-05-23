@@ -3,8 +3,8 @@ FROM node:8-stretch
 RUN apt-get -qq update && apt-get -qq install -y \
   unzip
 
-RUN curl -sSL https://github.com/protocolbuffers/protobuf/releases/download/v3.6.1/\
-protoc-3.6.1-linux-x86_64.zip -o /tmp/protoc.zip && \
+RUN curl -sSL https://github.com/protocolbuffers/protobuf/releases/download/v3.7.1/\
+protoc-3.7.1-linux-x86_64.zip -o /tmp/protoc.zip && \
   cd /tmp && \
   unzip -qq protoc.zip && \
   cp /tmp/bin/protoc /usr/local/bin/protoc
@@ -17,12 +17,12 @@ RUN mkdir -p /var/www/html/dist
 RUN mkdir -p /proto
 RUN mkdir -p /app
 
-COPY ../api/src/main/proto/reactive-gateway.proto /proto
+COPY api/src/main/proto/reactive-gateway.proto /proto
 
 ARG PROTO_DIR=/proto
 ARG APP_DIR=/app
 
-COPY app/*  $APP_DIR/
+COPY web/app/*  $APP_DIR/
 
 RUN protoc -I=$PROTO_DIR reactive-gateway.proto \
 --js_out=import_style=commonjs:\
@@ -37,7 +37,7 @@ RUN cd $APP_DIR && \
   cp shapes.html /var/www/html && \
   cp dist/main.js /var/www/html/dist
 
-EXPOSE 8088
+EXPOSE 8082
 WORKDIR /var/www/html
-CMD ["python", "-m", "SimpleHTTPServer", "8088"]
+CMD ["python", "-m", "SimpleHTTPServer", "8082"]
 

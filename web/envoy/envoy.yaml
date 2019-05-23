@@ -28,18 +28,20 @@ static_resources:
                         allow_origin:
                           - "*"
                         allow_methods: GET, PUT, DELETE, POST, OPTIONS
-                        allow_headers: keep-alive,user-agent,cache-control,content-type,content-transfer-encoding,custom-header-1,x-accept-content-transfer-encoding,x-accept-response-streaming,x-user-agent,x-grpc-web,grpc-timeout
+                        allow_headers: x-username,content-accept-encoding,grpc-accept-encoding,keep-alive,user-agent,cache-control,content-type,content-transfer-encoding,custom-header-1,x-accept-content-transfer-encoding,x-accept-response-streaming,x-user-agent,x-grpc-web,grpc-timeout
                         max_age: "1728000"
-                        expose_headers: custom-header-1,grpc-status,grpc-message
+                        expose_headers: custom-header-1,grpc-status,grpc-message,grpc-accept-encoding,content-accept-encoding,x-username
                         enabled: true
                 http_filters:
                   - name: envoy.grpc_web
                   - name: envoy.cors
                   - name: envoy.router
+
+
   clusters:
     - name: shapes_service
       connect_timeout: 0.25s
       type: logical_dns
       http2_protocol_options: {}
       lb_policy: round_robin
-      hosts: [{ socket_address: { address: grpc-server, port_value: 8080 }}]
+      hosts: [{ socket_address: { address: gateway-server, port_value: 9090 }}]
