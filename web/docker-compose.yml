@@ -1,0 +1,22 @@
+version: '3'
+services:
+  gateway-server:
+    image: rx-gateway-server:0.1.0-SNAPSHOT
+    ports:
+      - "9090:9090"
+  envoy:
+    build:
+      context: ./
+      dockerfile: ./envoy/Dockerfile
+    image: grpcweb/envoy
+    ports:
+      - "8080:8080"
+    links:
+      - gateway-server
+  shapes-client:
+    build:
+      context: ../
+      dockerfile: ./web/Dockerfile
+    image: shape-grpc-web
+    ports:
+      - "8082:8082"
