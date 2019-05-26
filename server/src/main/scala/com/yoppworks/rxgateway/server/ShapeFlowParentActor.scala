@@ -27,7 +27,7 @@ class ShapeFlowParentActor extends Actor with ChainingSyntax {
 
   private def createShapeFlowActor(id: String): ActorRef =
     context
-      .actorOf(ShapeFlowActor.props)
+      .actorOf(ShapeFlowActor.props, id)
       .pipe { ref =>
         actors += id -> ref
         ref
