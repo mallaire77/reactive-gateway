@@ -11,7 +11,7 @@ object ShapeFlowActor {
   case class State(
     regularShapes: Seq[Shape] = Seq.empty,
     tetrisShapes: Seq[TetrisShape] = Seq.empty,
-    killSwitch: KillSwitch = KillSwitches.shared("shape-flow")
+    killswitch: KillSwitch = KillSwitches.shared("shape-flow")
   ) {
     def withRegularShapes(x: Seq[Shape]): State =
       copy(regularShapes = x)
@@ -30,9 +30,13 @@ object ShapeFlowActor {
 
   case class GetAShape(shapeType: ShapeType, dropSpots: Seq[Int] = Seq.empty)
 
+  case class GetSomeShapes(shapeType: ShapeType, index: Int, consume: Int, dropSpots: Seq[Int] = Seq.empty)
+
   case class RegularShapes(shapes: Seq[Shape])
 
   case class TetrisShapes(shapes: Seq[TetrisShape])
+
+  object ReleaseShapes
 
   object InvalidRange
 }
@@ -52,13 +56,25 @@ case class ShapeFlowActor(implicit system: ActorSystem) extends Actor with Shape
       this.prepareTetrisShapes(numberOfShapesToPrepare)
 
     case GetAShape(shapeType, dropSpots) =>
-      shapeType match {
-        case RegularShapeType =>
-          sender() ! RegularShapes(this.consumeRegularShapes(0, 1))
+      sender() ! this.consume(0, 1, dropSpots)(shapeType)
 
-        case TetrisShapeType =>
-          sender() ! TetrisShapes(this.consumeTetrisShapes(0, 1).map(_.withDropSpots(dropSpots)))
-      }
+    case GetSomeShapes(shapeType, index, consume, dropSpots) =>
+      sender() ! this.consume(index, consume, dropSpots)(shapeType)
+
+    case ReleaseShapes =>
+      state.killswitch.shutdown()
+      reset()
+  }
+
+  private def reset(): Unit =
+    state = State()
+
+  private def consume(index: Int, consume: Int, dropSpots: Seq[Int] = Seq.empty): Any = {
+    case RegularShapeType =>
+      RegularShapes(this.consumeRegularShapes(0, 1))
+
+    case TetrisShapeType =>
+      TetrisShapes(this.consumeTetrisShapes(0, 1).map(_.withDropSpots(dropSpots)))
   }
 
   private def prepareRegularShapes(numberOfShapesToPrepare: Int): Unit =
