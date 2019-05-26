@@ -3,8 +3,7 @@ package com.yoppworks.rxgateway.server
 import com.yoppworks.rxgateway.api.{Shape, TetrisShape}
 import com.yoppworks.rxgateway.server.ShapeFlowActor._
 import com.yoppworks.rxgateway.utils.ChainingSyntax
-
-import akka.actor.{Actor, ActorSystem}
+import akka.actor.{Actor, ActorRef, Props}
 import akka.stream.{KillSwitch, KillSwitches}
 
 object ShapeFlowActor {
@@ -39,9 +38,12 @@ object ShapeFlowActor {
   object ReleaseShapes
 
   object InvalidRange
+
+  def props: Props =
+    Props(new ShapeFlowActor)
 }
 
-case class ShapeFlowActor(implicit system: ActorSystem) extends Actor with ShapeGenerator with TetrisShapeGenerator with ChainingSyntax {
+class ShapeFlowActor extends Actor with ShapeGenerator with TetrisShapeGenerator with ChainingSyntax {
   private type Retained[T] = Seq[T]
 
   private type Consumed[T] = Seq[T]
@@ -62,12 +64,15 @@ case class ShapeFlowActor(implicit system: ActorSystem) extends Actor with Shape
       sender() ! this.consume(index, consume, dropSpots)(shapeType)
 
     case ReleaseShapes =>
-      state.killswitch.shutdown()
-      reset()
+      this.killswitchEngage()
+      this.reset()
   }
 
   private def reset(): Unit =
     state = State()
+
+  private def killswitchEngage(): Unit =
+    state.killswitch.shutdown()
 
   private def consume(index: Int, consume: Int, dropSpots: Seq[Int] = Seq.empty): Any = {
     case RegularShapeType =>
