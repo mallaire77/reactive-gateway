@@ -44,6 +44,16 @@ message Shape {
   float rotation = 7; // angle of rotation in radians
 }
 
+enum TetrisShapeType {
+  LShape = 0;
+  LMirrorShape = 1;
+  TShape = 2;
+  IShape = 3;
+  ZShape = 4;
+  ZMirrorShape = 5;
+  AShape = 6;
+}
+
 message GetSomeTetrisShapes {
   uint32 startingIndex = 1;  // where to start in prepared shapes
   uint32 numberOfShapes = 2; // how many to fetch
@@ -55,11 +65,10 @@ message TetrisShape {
   Shape shape = 1;
   uint32 dropSpot = 2;
   bool animate = 3;
+  TetrisShapeType shapeType = 4;
 }
 
-message ReleaseShapes {
-
-}
+message ReleaseShapes {}
 
 message Result {
   bool viable = 1;

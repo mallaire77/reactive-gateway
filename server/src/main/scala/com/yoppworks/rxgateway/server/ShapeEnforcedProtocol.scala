@@ -215,8 +215,7 @@ object ShapeEnforcedProtocol {
               replyTo ! None
               getSomeShapes
             case ToGetSomeTetrisShapes ⇒
-              replyTo ! Some(
-                "getSomeTetrisShapes not permitted after getSomeShapes")
+              replyTo ! Some("getSomeTetrisShapes not permitted after getSomeShapes")
               getSomeTetrisShapesState
             case ToReleaseShapes ⇒
               replyTo ! None

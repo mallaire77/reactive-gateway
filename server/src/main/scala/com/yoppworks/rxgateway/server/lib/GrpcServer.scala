@@ -25,25 +25,22 @@ trait GrpcServer extends ChainingSyntax {
   def interface: String
 
   def port: Int
-  
+
   final type SystemRejectionHandler =
     ActorSystem => PartialFunction[Throwable, Status]
   
   def GrpcHandler: SystemRejectionHandler => HttpRequest => Future[HttpResponse]
 
-  def GrpcRejectionHandlers: SystemRejectionHandler
-
   private lazy val innerHandler =
     GrpcHandler { system: ActorSystem =>
-      GrpcRejectionHandlers(system)
-        .orElse(GrpcRejectionHandler.errorMapper(system))
+      GrpcRejectionHandler.errorMapper(system)
         .orElse(GrpcExceptionHandler.defaultMapper(system))
     }
 
   // Bind service handler servers to configured values
   private lazy val binding =
     Http().bindAndHandleAsync(
-      handle,
+      handler,
       interface = interface,
       port = port,
       connectionContext = HttpConnectionContext(http2 = Always))
@@ -66,7 +63,7 @@ trait GrpcServer extends ChainingSyntax {
         }
       }
 
-  private def handle: HttpRequest => Future[HttpResponse] =
+  private def handler: HttpRequest => Future[HttpResponse] =
     logRequest { request =>
       innerHandler(request)
     }

@@ -12,12 +12,13 @@
 
 package com.yoppworks.rxgateway.utils
 
+import scala.language.implicitConversions
+
 trait ChainingSyntax {
   @`inline` implicit final def scalaUtilChainingOps[A](a: A): ChainingSyntax.ChainingOps[A] = new ChainingSyntax.ChainingOps(a)
 }
 
 object ChainingSyntax {
-
   /** Adds chaining methods `tap` and `pipe` to every type.
     */
   final class ChainingOps[A](private val self: A) extends AnyVal {
@@ -62,5 +63,4 @@ object ChainingSyntax {
       */
     def pipe[B](f: A => B): B = f(self)
   }
-
 }
