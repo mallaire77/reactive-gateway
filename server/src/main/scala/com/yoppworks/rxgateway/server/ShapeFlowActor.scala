@@ -1,15 +1,24 @@
 package com.yoppworks.rxgateway.server
 
 import com.yoppworks.rxgateway.api.{Shape, TetrisShape}
-import com.yoppworks.rxgateway.server.ShapeActor.{GetAShape, InvalidRange, PrepareShape, RegularShapeType, RegularShapes, State, TetrisShapeType, TetrisShapes}
+import com.yoppworks.rxgateway.server.ShapeFlowActor._
 import com.yoppworks.rxgateway.utils.ChainingSyntax
 
 import akka.actor.{Actor, ActorSystem}
+import akka.stream.{KillSwitch, KillSwitches}
 
-object ShapeActor {
-  object InvalidRange
+object ShapeFlowActor {
+  case class State(
+    regularShapes: Seq[Shape] = Seq.empty,
+    tetrisShapes: Seq[TetrisShape] = Seq.empty,
+    killSwitch: KillSwitch = KillSwitches.shared("shape-flow")
+  ) {
+    def withRegularShapes(x: Seq[Shape]): State =
+      copy(regularShapes = x)
 
-  case class State(regularShapes: Seq[Shape] = Seq.empty, tetrisShapes: Seq[TetrisShape] = Seq.empty)
+    def withTetrisShapes(x: Seq[TetrisShape]): State =
+      copy(tetrisShapes = x)
+  }
 
   sealed trait ShapeType
 
@@ -17,16 +26,18 @@ object ShapeActor {
 
   object TetrisShapeType extends ShapeType
 
-  case class PrepareShape(numberOfShapesToPrepare: Int, shapeType: ShapeType, dropSpot: Option[Int] = None)
+  case class PrepareShapes(numberOfShapesToPrepare: Int)
 
-  case class GetAShape(shapeType: ShapeType)
+  case class GetAShape(shapeType: ShapeType, dropSpots: Seq[Int] = Seq.empty)
 
   case class RegularShapes(shapes: Seq[Shape])
 
   case class TetrisShapes(shapes: Seq[TetrisShape])
+
+  object InvalidRange
 }
 
-case class ShapeActor(implicit system: ActorSystem) extends Actor with ChainingSyntax {
+case class ShapeFlowActor(implicit system: ActorSystem) extends Actor with ShapeGenerator with TetrisShapeGenerator with ChainingSyntax {
   private type Retained[T] = Seq[T]
 
   private type Consumed[T] = Seq[T]
@@ -36,36 +47,31 @@ case class ShapeActor(implicit system: ActorSystem) extends Actor with ChainingS
   private var state = State()
 
   override def receive: Receive = {
-    case PrepareShape(numberOfShapesToPrepare, shapeType, dropSpot) =>
+    case PrepareShapes(numberOfShapesToPrepare) =>
+      this.prepareRegularShapes(numberOfShapesToPrepare)
+      this.prepareTetrisShapes(numberOfShapesToPrepare)
+
+    case GetAShape(shapeType, dropSpots) =>
       shapeType match {
         case RegularShapeType =>
-          withRegularShapes(numberOfShapesToPrepare)
+          sender() ! RegularShapes(this.consumeRegularShapes(0, 1))
 
         case TetrisShapeType =>
-          withTetrisShapes(numberOfShapesToPrepare, dropSpot.getOrElse(0))
-      }
-
-    case GetAShape(shapeType) =>
-      shapeType match {
-        case RegularShapeType =>
-          sender() ! RegularShapes(consumeRegularShapes(0, 1))
-
-        case TetrisShapeType =>
-          sender() ! TetrisShapeGenerator(consumeTetrisShapes(0, 1))
+          sender() ! TetrisShapes(this.consumeTetrisShapes(0, 1).map(_.withDropSpots(dropSpots)))
       }
   }
 
-  private def withRegularShapes(numberOfShapesToPrepare: Int): Unit =
+  private def prepareRegularShapes(numberOfShapesToPrepare: Int): Unit =
     withRegularShapes(Seq.fill(numberOfShapesToPrepare)(ShapeGenerator.makeAShape))
 
   private def withRegularShapes(shapes: Seq[Shape]): Unit =
-    state.copy(regularShapes = shapes)
+    state = state.withRegularShapes(shapes)
 
-  private def withTetrisShapes(numberOfShapesToPrepare: Int, dropSpot: Int): Unit =
-    withTetrisShapes(Seq.fill(numberOfShapesToPrepare)(ShapeGenerator.makeATetrisShape(dropSpot)))
+  private def prepareTetrisShapes(numberOfShapesToPrepare: Int): Unit =
+    withTetrisShapes(Seq.fill(numberOfShapesToPrepare)(TetrisShapeGenerator.makeATetrisShape))
 
   private def withTetrisShapes(shapes: Seq[TetrisShape]): Unit =
-    state.copy(tetrisShapes = shapes)
+    state = state.withTetrisShapes(shapes)
 
   private def consumeRegularShapes(index: Int, consume: Int): Seq[Shape] =
     consumeShapes(index, consume)(state.regularShapes).pipe {
@@ -93,7 +99,7 @@ case class ShapeActor(implicit system: ActorSystem) extends Actor with ChainingS
         val (consumed, retained) =
           seq.zipWithIndex.partition {
             case (_, idx) =>
-              range.contains(idx)
+              range.contains(idx - 1)
           }
         Right((dropIdx(retained), dropIdx(consumed)))
       }

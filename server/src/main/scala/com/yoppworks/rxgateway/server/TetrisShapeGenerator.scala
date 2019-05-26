@@ -3,7 +3,20 @@ package com.yoppworks.rxgateway.server
 import com.yoppworks.rxgateway.api.{Color, Opacity, Shape, TetrisShape, TetrisShapeType}
 import com.yoppworks.rxgateway.utils.{ChainingSyntax, RangeChooser}
 
-object TetrisShapeGenerator extends RangeChooser with ChainingSyntax {
+trait TetrisShapeGenerator extends ChainingSyntax with RangeChooser {
+  implicit class TetrisShape2DropSpots(tetrisShape: TetrisShape) {
+    def withDropSpots(dropSpots: Seq[Int]): TetrisShape =
+      dropSpots
+        .isEmpty
+        .pipe {
+          case true =>
+            tetrisShape.withDropSpot(0)
+
+          case false =>
+            tetrisShape.withDropSpot(dropSpots(randomWithinRange(0, dropSpots.length - 1)))
+        }
+  }
+
   private val LShape =
     Shape(numberOfSides = 4, height = 75, width = 50)
 
@@ -66,44 +79,30 @@ object TetrisShapeGenerator extends RangeChooser with ChainingSyntax {
   def makeAnOpacity: Opacity =
     Opacity.values(randomWithinRange(0, Opacity.values.length - 1))
 
-  def makeATetrisShape(dropSpots: Seq[Int]): TetrisShape =
-    dropSpots
-      .isEmpty
-      .pipe {
-        case true =>
-          makeATetrisShape(0)
+  def makeATetrisShape: TetrisShape =
+    randomize(All(randomWithinRange(0, All.length - 1)))
 
-        case false =>
-          makeATetrisShape(dropSpots(randomWithinRange(0, dropSpots.length - 1)))
-      }
-
-  def makeATetrisShape(dropSpot: Int): TetrisShape =
-    randomize(dropSpot, All(randomWithinRange(0, All.length - 1)))
-
-  private def randomize(dropSpot: Int, tetrisShape: TetrisShape): TetrisShape =
+  private def randomize(tetrisShape: TetrisShape): TetrisShape =
     tetrisShape
-      .copy(
-        shape =
-          tetrisShape
-            .shape
-            .map(pretty)
-            .map(adjustRotation(makeATetrisRotation)),
-        dropSpot = dropSpot
+      .withShape(
+        tetrisShape
+          .shape
+          .map(pretty)
+          .map(adjustRotation(makeATetrisRotation))
+          .orNull
       )
 
   private def pretty: Shape => Shape =
-    _.copy(
-      edgeColor = Some(makeAColor),
-      fillColor = Some(makeAColor),
-      opacity = makeAnOpacity
-    )
+    _.withEdgeColor(makeAColor).withFillColor(makeAColor).withOpacity(makeAnOpacity)
 
   private def adjustRotation(rotation: Int)(shape: Shape): Shape =
     rotation match {
       case x if x == 90 || x == 270 =>
-        shape.copy(height = shape.width, width = shape.height, rotation = x)
+        shape.withHeight(shape.width).withWidth(shape.height).withRotation(x)
 
       case x =>
-        shape.copy(rotation = x)
+        shape.withRotation(x)
     }
 }
+
+object TetrisShapeGenerator extends TetrisShapeGenerator

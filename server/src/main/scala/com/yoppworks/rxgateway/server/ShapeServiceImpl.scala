@@ -13,7 +13,7 @@ import com.yoppworks.rxgateway.utils.ChainingSyntax
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-case class ShapeServiceImpl() extends ShapeServicePowerApi with ChainingSyntax {
+case class ShapeServiceImpl() extends ShapeServicePowerApi with ShapeGenerator with TetrisShapeGenerator with ChainingSyntax {
   private type Message = String
 
   private final val HeaderKey = "X-USERNAME"
@@ -36,7 +36,7 @@ case class ShapeServiceImpl() extends ShapeServicePowerApi with ChainingSyntax {
 
   def getAShape(in: GetAShape, metadata: Metadata): Future[ShapeResult] =
     checkTransitionFuture(metadata, ToGetAShape) {
-      Future.successful(ShapeResult(viable = true, SuccessfulShapeServiceResult, Some(ShapeGenerator.makeAShape)))
+      Future.successful(ShapeResult(viable = true, SuccessfulShapeServiceResult, Some(makeAShape)))
     }(msg => Future.successful(FailedShapeResult(msg)))
 
   def getSomeShapes(in: GetSomeShapes, metadata: Metadata): Source[ShapeResult, NotUsed] =
@@ -44,7 +44,7 @@ case class ShapeServiceImpl() extends ShapeServicePowerApi with ChainingSyntax {
       checkTransitionStream(metadata, state) {
         Source
           .tick(0.seconds, in.intervalMs.milliseconds, ())
-          .map(_ => ShapeGenerator.makeAShape)
+          .map(_ => makeAShape)
           .zipWithIndex
           .takeWhile {
             case (_, idx) =>
@@ -63,7 +63,7 @@ case class ShapeServiceImpl() extends ShapeServicePowerApi with ChainingSyntax {
       checkTransitionStream(metadata, state) {
         Source
           .tick(0.seconds, in.intervalMs.milliseconds, ())
-          .map(_ => TetrisShapeGenerator.makeATetrisShape(in.dropSpots))
+          .map(_ => makeATetrisShape.withDropSpots(in.dropSpots))
           .zipWithIndex
           .takeWhile {
             case (_, idx) =>

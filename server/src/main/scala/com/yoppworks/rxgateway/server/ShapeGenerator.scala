@@ -3,7 +3,7 @@ package com.yoppworks.rxgateway.server
 import com.yoppworks.rxgateway.api.{Color, Opacity, Shape}
 import com.yoppworks.rxgateway.utils.RangeChooser
 
-object ShapeGenerator extends RangeChooser {
+trait ShapeGenerator extends RangeChooser {
   private val MinNumberOfSides =
     3
 
@@ -26,7 +26,8 @@ object ShapeGenerator extends RangeChooser {
     Color(
       randomWithinRange(0, 255),
       randomWithinRange(0, 255),
-      randomWithinRange(0, 255))
+      randomWithinRange(0, 255)
+    )
 
   def makeAnOpacity: Opacity =
     Opacity.values(randomWithinRange(0, Opacity.values.length - 1))
@@ -39,5 +40,8 @@ object ShapeGenerator extends RangeChooser {
       opacity = makeAnOpacity,
       width = randomWithinRange(MinShapeWL, MaxShapeWL),
       height = randomWithinRange(MinShapeWL, MaxShapeWL),
-      rotation = randomWithinRange(MinRotation, MaxRotation).toFloat)
+      rotation = randomWithinRange(MinRotation, MaxRotation).toFloat
+    )
 }
+
+object ShapeGenerator extends ShapeGenerator
