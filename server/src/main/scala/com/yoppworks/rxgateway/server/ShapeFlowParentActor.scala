@@ -21,14 +21,17 @@ class ShapeFlowParentActor extends Actor with ChainingSyntax {
 
   override def receive: Receive = {
     case Message(id, message) =>
+//      println(s"ShapeFlowParentActor: received: $id -> $message")
       actors.getOrElse(id, createShapeFlowActor(id)) forward message
   }
 
-  private def createShapeFlowActor(id: String): ActorRef =
+  private def createShapeFlowActor(id: String): ActorRef = {
     context
       .actorOf(ShapeFlowActor.props, id)
       .pipe { ref =>
         actors += id -> ref
+//        println(s"ShapeFlowParentActor: createShapeFlowActor: $actors")
         ref
       }
+  }
 }

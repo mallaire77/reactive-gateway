@@ -8,6 +8,8 @@ import akka.actor.{Actor, Props}
 import akka.stream.{KillSwitches, SharedKillSwitch}
 
 object ShapeFlowActor {
+  type ShapeResult[T] = Either[ShapeError, T]
+
   case class State(
     regularShapes: Seq[Shape] = Seq.empty,
     tetrisShapes: Seq[TetrisShape] = Seq.empty,
@@ -38,7 +40,9 @@ object ShapeFlowActor {
 
   object ReleaseShapes
 
-  object InvalidRange
+  sealed abstract class ShapeError(val msg: String)
+
+  object InvalidRange extends ShapeError("Invalid range")
 
   def props: Props =
     Props(new ShapeFlowActor)
@@ -55,17 +59,31 @@ class ShapeFlowActor extends Actor with RegularShapeGenerator with TetrisShapeGe
 
   override def receive: Receive = {
     case PrepareShapes(numberOfShapesToPrepare) =>
+//      println(s"ShapeFlowActor: PrepareShapes($numberOfShapesToPrepare)")
+//      println(s"ShapeFlowActor: State: Before: PrepareShapes $state")
       this.prepareRegularShapes(numberOfShapesToPrepare)
       this.prepareTetrisShapes(numberOfShapesToPrepare)
+//      println(s"ShapeFlowActor: State: After: PrepareShapes $state")
       sender() ! ()
 
     case GetAShape(shapeType, index, dropSpots) =>
-      sender() ! this.consume(index, 1, dropSpots)(shapeType)
+//      println(s"ShapeFlowActor: GetAShape($shapeType,$index,$dropSpots)")
+      this.consumeShapes(index, 1, dropSpots)(shapeType).pipe { msg =>
+//        println(s"ShapeFlowActor: Responding: GetAShape $msg")
+//        println(s"ShapeFlowActor: State: GetAShape $state")
+        sender() ! msg
+      }
 
     case GetSomeShapes(shapeType, index, consume, dropSpots) =>
-      sender() ! this.consume(index, consume, dropSpots)(shapeType)
+//      println(s"ShapeFlowActor: GetSomeShapes($shapeType,$index,$consume,$dropSpots)")
+      this.consumeShapes(index, consume, dropSpots)(shapeType).pipe { msg =>
+//        println(s"ShapeFlowActor: Responding: GetSomeShapes $msg")
+//        println(s"ShapeFlowActor: State: GetSomeShapes $state")
+        sender() ! msg
+      }
 
     case ReleaseShapes =>
+//      println(s"ShapeFlowActor: ReleaseShapes")
       this.killswitchEngage()
       this.reset()
       sender() ! ()
@@ -76,14 +94,6 @@ class ShapeFlowActor extends Actor with RegularShapeGenerator with TetrisShapeGe
 
   private def killswitchEngage(): Unit =
     state.killswitch.shutdown()
-
-  private def consume(index: Int, consume: Int, dropSpots: Seq[Int] = Seq.empty): ShapeType => Any = {
-    case RegularShapeType =>
-      RegularShapes(this.consumeRegularShapes(index, consume), state.killswitch)
-
-    case TetrisShapeType =>
-      TetrisShapes(this.consumeTetrisShapes(index, consume).map(_.withDropSpots(dropSpots)), state.killswitch)
-  }
 
   private def prepareRegularShapes(numberOfShapesToPrepare: Int): Unit =
     withRegularShapes(Seq.fill(numberOfShapesToPrepare)(RegularShapeGenerator.makeAShape))
@@ -97,42 +107,46 @@ class ShapeFlowActor extends Actor with RegularShapeGenerator with TetrisShapeGe
   private def withTetrisShapes(shapes: Seq[TetrisShape]): Unit =
     state = state.withTetrisShapes(shapes)
 
-  private def consumeRegularShapes(index: Int, consume: Int): Seq[Shape] =
-    consumeShapes(index, consume)(state.regularShapes).pipe {
-      case Right((retained, consumed)) =>
-        withRegularShapes(retained)
-        consumed
-
-      case Left(_) =>
-        Seq.empty
-    }
-
-  private def consumeTetrisShapes(index: Int, consume: Int): Seq[TetrisShape] =
-    consumeShapes(index, consume)(state.tetrisShapes).pipe {
-      case Right((retained, consumed)) =>
-        withTetrisShapes(retained)
-        consumed
-
-      case Left(_) =>
-        Seq.empty
-    }
-
-  private def consumeShapes[T](index: Int, consume: Int)(seq: Seq[T]): Either[InvalidRange.type, Partitioned[T]] =
-    if (isConsumeWithinRange(index, consume)(seq))
-      (index to index + (consume - 1)).pipe { range =>
-        val (consumed, retained) =
-          seq.zipWithIndex.partition {
-            case (_, idx) =>
-              range.contains(idx - 1)
-          }
-        Right((dropIdx(retained), dropIdx(consumed)))
+  private def consumeShapes(index: Int, consume: Int, dropSpots: Seq[Int] = Seq.empty): ShapeType => Any = {
+    case RegularShapeType =>
+      this.partition(index, consume)(state.regularShapes).map {
+        case (retained, consumed) =>
+          withRegularShapes(retained)
+          RegularShapes(consumed, state.killswitch)
       }
-    else
-      Left(InvalidRange)
 
+    case TetrisShapeType =>
+      this.partition(index, consume)(state.tetrisShapes).map {
+        case (retained, consumed) =>
+          withTetrisShapes(retained)
+          TetrisShapes(consumed, state.killswitch)
+      }
+  }
+
+  private def partition[T](
+    index: Int,
+    consume: Int
+  )(seq: Seq[T]): Either[ShapeError, Partitioned[T]] =
+    (consume - 1).pipe { adjustedConsume =>
+      if (isConsumeWithinRange(index, adjustedConsume)(seq))
+        (index to index + adjustedConsume).pipe { range =>
+          seq
+            .zipWithIndex
+            .partition {
+              case (_, idx) =>
+                range.contains(idx)
+            }
+            .pipe {
+              case (consumed, retained) =>
+                Right(dropIdx(retained) -> dropIdx(consumed))
+            }
+        }
+      else
+        Left(InvalidRange)
+    }
 
   private def isConsumeWithinRange[T](index: Int, consume: Int)(seq: Seq[T]): Boolean =
-    seq.nonEmpty && index > 0 && index + (consume - 1) < seq.length - 1
+    seq.nonEmpty && index >= 0 && consume >= 0 && index + consume <= seq.length - 1
 
   private def dropIdx[T](seq: Seq[(T, Int)]): Seq[T] =
     seq.map(_._1)

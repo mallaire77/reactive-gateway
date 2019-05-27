@@ -17,7 +17,8 @@ import com.yoppworks.rxgateway.utils.ChainingSyntax
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 
-case class ShapeServiceImpl()(implicit ec: ExecutionContext, system: ActorSystem) extends ShapeServicePowerApi with RegularShapeGenerator with TetrisShapeGenerator with ChainingSyntax {
+case class ShapeServiceImpl()(implicit ec: ExecutionContext, system: ActorSystem)
+  extends ShapeServicePowerApi with RegularShapeGenerator with TetrisShapeGenerator with ChainingSyntax {
   private type Message = String
 
   private final val HeaderKey = "X-USERNAME"
@@ -49,9 +50,13 @@ case class ShapeServiceImpl()(implicit ec: ExecutionContext, system: ActorSystem
     checkTransitionFuture(metadata, ToGetAShape) { id =>
       Message(id, ShapeFlowActor.GetAShape(ShapeFlowActor.RegularShapeType, in.index)).pipe { msg =>
         (ShapeFlowStateActor ? msg)
-          .mapTo[ShapeFlowActor.RegularShapes]
-          .map { result =>
-            ShapeResult(viable = true, SuccessfulShapeServiceResult, result.shapes.headOption)
+          .mapTo[Either[ShapeFlowActor.ShapeError, ShapeFlowActor.RegularShapes]]
+          .map {
+            case Right(result) =>
+              ShapeResult(viable = true, SuccessfulShapeServiceResult, result.shapes.headOption)
+
+            case Left(error) =>
+              FailedShapeResult(error.msg)
           }
       }
     }(msg => Future.successful(FailedShapeResult(msg)))
@@ -59,46 +64,58 @@ case class ShapeServiceImpl()(implicit ec: ExecutionContext, system: ActorSystem
   def getSomeShapes(in: GetSomeShapes, metadata: Metadata): Source[ShapeResult, NotUsed] =
     ToGetSomeShapes.pipe { state =>
       checkTransitionStream(metadata, state) { id =>
-        Message(id, ShapeFlowActor.GetSomeShapes(ShapeFlowActor.RegularShapeType, in.startingIndex, in.numberOfShapes)).pipe { msg =>
-          (ShapeFlowStateActor ? msg)
-            .mapTo[ShapeFlowActor.RegularShapes]
-            .pipe { fn =>
-              Source.fromFuture(fn)
-                .flatMapConcat { result =>
-                  Source
-                    .fromIterator(() => result.shapes.toIterator)
-                    .throttle(1, in.intervalMs.milliseconds)
-                    .via(result.killswitch.flow)
-                    .map { shape =>
-                      ShapeResult(viable = true, SuccessfulShapeServiceResult, Some(shape))
-                    }
-                    .viaMat(Flow[ShapeResult].map(identity))(Keep.right)
-                }
-            }
-        }
+        Message(id, ShapeFlowActor.GetSomeShapes(ShapeFlowActor.RegularShapeType, in.startingIndex, in.numberOfShapes))
+          .pipe { msg =>
+            (ShapeFlowStateActor ? msg)
+              .mapTo[ShapeFlowActor.ShapeResult[ShapeFlowActor.RegularShapes]]
+              .pipe { response =>
+                Source
+                  .fromFuture(response)
+                  .flatMapConcat {
+                    case Right(result) =>
+                      Source
+                        .fromIterator(() => result.shapes.toIterator)
+                        .throttle(1, in.intervalMs.milliseconds)
+                        .via(result.killswitch.flow)
+                        .map { shape =>
+                          ShapeResult(viable = true, SuccessfulShapeServiceResult, Some(shape))
+                        }
+                        .viaMat(Flow[ShapeResult].map(identity))(Keep.right)
+
+                    case Left(error) =>
+                      Source.single(FailedShapeResult(error.msg))
+                  }
+              }
+          }
       }(msg => Source.single(FailedShapeResult(msg)))
     }
 
   def getSomeTetrisShapes(in: GetSomeTetrisShapes, metadata: Metadata): Source[TetrisShapeResult, NotUsed] =
     ToGetSomeTetrisShapes.pipe { state =>
       checkTransitionStream(metadata, state) { id =>
-        Message(id, ShapeFlowActor.GetSomeShapes(ShapeFlowActor.TetrisShapeType, in.startingIndex, in.numberOfShapes)).pipe { msg =>
-          (ShapeFlowStateActor ? msg)
-            .mapTo[ShapeFlowActor.TetrisShapes]
-            .pipe { fn =>
-              Source.fromFuture(fn)
-                .flatMapConcat { result =>
-                  Source
-                    .fromIterator(() => result.shapes.toIterator)
-                    .throttle(1, in.intervalMs.milliseconds)
-                    .via(result.killswitch.flow)
-                    .map { shape =>
-                      TetrisShapeResult(viable = true, SuccessfulShapeServiceResult, Some(shape))
-                    }
-                    .viaMat(Flow[TetrisShapeResult].map(identity))(Keep.right)
-                }
-            }
-        }
+        Message(id, ShapeFlowActor.GetSomeShapes(ShapeFlowActor.TetrisShapeType, in.startingIndex, in.numberOfShapes))
+          .pipe { msg =>
+            (ShapeFlowStateActor ? msg)
+              .mapTo[ShapeFlowActor.ShapeResult[ShapeFlowActor.TetrisShapes]]
+              .pipe { response =>
+                Source
+                  .fromFuture(response)
+                  .flatMapConcat {
+                    case Right(result) =>
+                      Source
+                        .fromIterator(() => result.shapes.toIterator)
+                        .throttle(1, in.intervalMs.milliseconds)
+                        .via(result.killswitch.flow)
+                        .map { shape =>
+                          TetrisShapeResult(viable = true, SuccessfulShapeServiceResult, Some(shape))
+                        }
+                        .viaMat(Flow[TetrisShapeResult].map(identity))(Keep.right)
+
+                    case Left(error) =>
+                      Source.single(FailedTetrisShapeResult(error.msg))
+                  }
+              }
+          }
       }(msg => Source.single(FailedTetrisShapeResult(msg)))
     }
 
