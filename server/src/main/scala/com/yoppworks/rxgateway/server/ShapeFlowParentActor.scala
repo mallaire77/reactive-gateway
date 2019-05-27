@@ -2,14 +2,13 @@ package com.yoppworks.rxgateway.server
 
 import akka.actor.{Actor, ActorRef, Props}
 
-import com.yoppworks.rxgateway.server.ShapeFlowParentActor.{Id, Message}
+import com.yoppworks.rxgateway.models.Id
+import com.yoppworks.rxgateway.server.ShapeFlowParentActor.Message
 import com.yoppworks.rxgateway.utils.ChainingSyntax
 
 import scala.collection.mutable
 
 object ShapeFlowParentActor {
-  type Id = String
-
   case class Message(id: Id, message: Any)
 
   def props: Props =

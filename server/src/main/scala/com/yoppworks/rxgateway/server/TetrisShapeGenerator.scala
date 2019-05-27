@@ -1,9 +1,9 @@
 package com.yoppworks.rxgateway.server
 
-import com.yoppworks.rxgateway.api.{Color, Opacity, Shape, TetrisShape, TetrisShapeType}
-import com.yoppworks.rxgateway.utils.{ChainingSyntax, RangeChooser}
+import com.yoppworks.rxgateway.api.{Shape, TetrisShape, TetrisShapeType}
+import com.yoppworks.rxgateway.utils.ChainingSyntax
 
-trait TetrisShapeGenerator extends ChainingSyntax with RangeChooser {
+trait TetrisShapeGenerator extends ShapeGenerator with ChainingSyntax {
   implicit class TetrisShape2DropSpots(tetrisShape: TetrisShape) {
     def withDropSpots(dropSpots: Seq[Int]): TetrisShape =
       dropSpots
@@ -23,7 +23,7 @@ trait TetrisShapeGenerator extends ChainingSyntax with RangeChooser {
   private val LTetrisShape =
     TetrisShape(shape = Some(LShape), shapeType = TetrisShapeType.LShape, animate = true)
 
-  val LMirrorTetrisShape =
+  private val LMirrorTetrisShape =
     TetrisShape(shape = Some(LShape), shapeType = TetrisShapeType.LMirrorShape, animate = true)
 
   private val TShape =
@@ -69,15 +69,6 @@ trait TetrisShapeGenerator extends ChainingSyntax with RangeChooser {
 
   def makeATetrisRotation: Int =
     TetrisRotations(randomWithinRange(0, TetrisRotations.length - 1))
-
-  def makeAColor: Color =
-    Color(
-      randomWithinRange(0, 255),
-      randomWithinRange(0, 255),
-      randomWithinRange(0, 255))
-
-  def makeAnOpacity: Opacity =
-    Opacity.values(randomWithinRange(0, Opacity.values.length - 1))
 
   def makeATetrisShape: TetrisShape =
     randomize(All(randomWithinRange(0, All.length - 1)))

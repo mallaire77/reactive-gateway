@@ -3,14 +3,15 @@ package com.yoppworks.rxgateway.server
 import com.yoppworks.rxgateway.api.{Shape, TetrisShape}
 import com.yoppworks.rxgateway.server.ShapeFlowActor._
 import com.yoppworks.rxgateway.utils.ChainingSyntax
-import akka.actor.{Actor, ActorRef, Props}
-import akka.stream.{KillSwitch, KillSwitches}
+
+import akka.actor.{Actor, Props}
+import akka.stream.{KillSwitches, SharedKillSwitch}
 
 object ShapeFlowActor {
   case class State(
     regularShapes: Seq[Shape] = Seq.empty,
     tetrisShapes: Seq[TetrisShape] = Seq.empty,
-    killswitch: KillSwitch = KillSwitches.shared("shape-flow")
+    killswitch: SharedKillSwitch = KillSwitches.shared("shape-flow")
   ) {
     def withRegularShapes(x: Seq[Shape]): State =
       copy(regularShapes = x)
@@ -27,13 +28,13 @@ object ShapeFlowActor {
 
   case class PrepareShapes(numberOfShapesToPrepare: Int)
 
-  case class GetAShape(shapeType: ShapeType, dropSpots: Seq[Int] = Seq.empty)
+  case class GetAShape(shapeType: ShapeType, index: Int, dropSpots: Seq[Int] = Seq.empty)
 
   case class GetSomeShapes(shapeType: ShapeType, index: Int, consume: Int, dropSpots: Seq[Int] = Seq.empty)
 
-  case class RegularShapes(shapes: Seq[Shape])
+  case class RegularShapes(shapes: Seq[Shape], killswitch: SharedKillSwitch)
 
-  case class TetrisShapes(shapes: Seq[TetrisShape])
+  case class TetrisShapes(shapes: Seq[TetrisShape], killswitch: SharedKillSwitch)
 
   object ReleaseShapes
 
@@ -43,7 +44,7 @@ object ShapeFlowActor {
     Props(new ShapeFlowActor)
 }
 
-class ShapeFlowActor extends Actor with ShapeGenerator with TetrisShapeGenerator with ChainingSyntax {
+class ShapeFlowActor extends Actor with RegularShapeGenerator with TetrisShapeGenerator with ChainingSyntax {
   private type Retained[T] = Seq[T]
 
   private type Consumed[T] = Seq[T]
@@ -56,9 +57,10 @@ class ShapeFlowActor extends Actor with ShapeGenerator with TetrisShapeGenerator
     case PrepareShapes(numberOfShapesToPrepare) =>
       this.prepareRegularShapes(numberOfShapesToPrepare)
       this.prepareTetrisShapes(numberOfShapesToPrepare)
+      sender() ! ()
 
-    case GetAShape(shapeType, dropSpots) =>
-      sender() ! this.consume(0, 1, dropSpots)(shapeType)
+    case GetAShape(shapeType, index, dropSpots) =>
+      sender() ! this.consume(index, 1, dropSpots)(shapeType)
 
     case GetSomeShapes(shapeType, index, consume, dropSpots) =>
       sender() ! this.consume(index, consume, dropSpots)(shapeType)
@@ -66,6 +68,7 @@ class ShapeFlowActor extends Actor with ShapeGenerator with TetrisShapeGenerator
     case ReleaseShapes =>
       this.killswitchEngage()
       this.reset()
+      sender() ! ()
   }
 
   private def reset(): Unit =
@@ -74,16 +77,16 @@ class ShapeFlowActor extends Actor with ShapeGenerator with TetrisShapeGenerator
   private def killswitchEngage(): Unit =
     state.killswitch.shutdown()
 
-  private def consume(index: Int, consume: Int, dropSpots: Seq[Int] = Seq.empty): Any = {
+  private def consume(index: Int, consume: Int, dropSpots: Seq[Int] = Seq.empty): ShapeType => Any = {
     case RegularShapeType =>
-      RegularShapes(this.consumeRegularShapes(0, 1))
+      RegularShapes(this.consumeRegularShapes(index, consume), state.killswitch)
 
     case TetrisShapeType =>
-      TetrisShapes(this.consumeTetrisShapes(0, 1).map(_.withDropSpots(dropSpots)))
+      TetrisShapes(this.consumeTetrisShapes(index, consume).map(_.withDropSpots(dropSpots)), state.killswitch)
   }
 
   private def prepareRegularShapes(numberOfShapesToPrepare: Int): Unit =
-    withRegularShapes(Seq.fill(numberOfShapesToPrepare)(ShapeGenerator.makeAShape))
+    withRegularShapes(Seq.fill(numberOfShapesToPrepare)(RegularShapeGenerator.makeAShape))
 
   private def withRegularShapes(shapes: Seq[Shape]): Unit =
     state = state.withRegularShapes(shapes)
