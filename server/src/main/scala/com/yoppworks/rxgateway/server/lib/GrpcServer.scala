@@ -4,6 +4,7 @@ import akka.actor.ActorSystem
 import akka.grpc.scaladsl.GrpcExceptionHandler
 import akka.http.scaladsl.{Http, HttpConnectionContext}
 import akka.http.scaladsl.UseHttp2.Always
+import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.stream.ActorMaterializer
 
@@ -45,6 +46,13 @@ trait GrpcServer extends ChainingSyntax {
       port = port,
       connectionContext = HttpConnectionContext(http2 = Always))
 
+  private def mapRequest(route: HttpRequest => Future[HttpResponse]): HttpRequest => Future[HttpResponse] =
+    request =>
+      (RawHeader("grpc-accept-encoding", "identity") +: request.headers.filter(x => x.name != "grpc-accept-encoding"))
+        .pipe { newHeaders =>
+          route(request.copy(headers = newHeaders))
+        }
+
   private def logRequest(route: HttpRequest => Future[HttpResponse]): HttpRequest => Future[HttpResponse] =
     request =>
       System.currentTimeMillis.pipe { start =>
@@ -64,13 +72,15 @@ trait GrpcServer extends ChainingSyntax {
       }
 
   private def handler: HttpRequest => Future[HttpResponse] =
-    logRequest { request =>
-      innerHandler(request)
+    mapRequest {
+      logRequest { request =>
+        innerHandler(request)
+      }
     }
 
   def run()(implicit system: ActorSystem): Unit = {
     // Report successful binding
-    binding.foreach {binding =>
+    binding.foreach { binding =>
       system.log.info(s"gRPC over HTTP/2 server bound to: ${binding.localAddress}")
     }
   }
