@@ -35,16 +35,4 @@ libraryDependencies ++= Seq(
 )
 
 //Docker Build settings
-maintainer in Docker := organization.toString
-
-packageName in Docker := packageName.value
-
-defaultLinuxInstallLocation in Docker := "/opt/docker"
-
-version in Docker := sys.env.getOrElse("VERSION", "0.dev")
-
 dockerExposedPorts := Seq(9090)
-
-dockerBaseImage := "openjdk:8-slim"
-
-dockerUpdateLatest := true
