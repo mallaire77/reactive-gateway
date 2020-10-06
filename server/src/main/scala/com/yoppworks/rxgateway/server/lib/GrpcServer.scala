@@ -1,16 +1,14 @@
 package com.yoppworks.rxgateway.server.lib
 
 import akka.actor.ActorSystem
+import akka.grpc.Trailers
 import akka.grpc.scaladsl.GrpcExceptionHandler
-import akka.http.scaladsl.{Http, HttpConnectionContext}
-import akka.http.scaladsl.UseHttp2.Always
+import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.stream.ActorMaterializer
 
 import com.yoppworks.rxgateway.utils.ChainingSyntax
-
-import io.grpc.Status
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -28,7 +26,7 @@ trait GrpcServer extends ChainingSyntax {
   def port: Int
 
   final type SystemRejectionHandler =
-    ActorSystem => PartialFunction[Throwable, Status]
+    ActorSystem => PartialFunction[Throwable, Trailers]
   
   def GrpcHandler: SystemRejectionHandler => HttpRequest => Future[HttpResponse]
 
@@ -40,17 +38,16 @@ trait GrpcServer extends ChainingSyntax {
 
   // Bind service handler servers to configured values
   private lazy val binding =
-    Http().bindAndHandleAsync(
-      handler,
+    Http().newServerAt(
       interface = interface,
       port = port,
-      connectionContext = HttpConnectionContext(http2 = Always))
+    ).bind(handler)
 
   private def mapRequest(route: HttpRequest => Future[HttpResponse]): HttpRequest => Future[HttpResponse] =
     request =>
       (RawHeader("grpc-accept-encoding", "identity") +: request.headers.filter(x => x.name != "grpc-accept-encoding"))
         .pipe { newHeaders =>
-          route(request.copy(headers = newHeaders))
+          route(request.withHeaders(headers = newHeaders))
         }
 
   private def logRequest(route: HttpRequest => Future[HttpResponse]): HttpRequest => Future[HttpResponse] =
