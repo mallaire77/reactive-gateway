@@ -26,7 +26,7 @@ portions of this demonstration:
 * Server - a simple Akka-HTTP based server that services random shapes
 * Mobile - an iPhone application that shows the shapes
 * Web - a web application that shows the shapes
-The fourth sub-project, api, is simply a definition of the gRPC service the 
+* The fourth sub-project, api, is simply a definition of the gRPC service the 
 other components use. 
 
 # Build Instructions
