@@ -27,7 +27,7 @@ object ShapeGrpcServer extends GrpcServer with App {
   implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
 
   lazy val GrpcHandler =
-    eHandler => ShapeServicePowerApiHandler.partial(ShapeServiceImpl(), eHandler = eHandler)
+    eHandler => ShapeServicePowerApiHandler.partial(ShapeServicePowerApiImpl(), eHandler = eHandler)
 
   run()
 }

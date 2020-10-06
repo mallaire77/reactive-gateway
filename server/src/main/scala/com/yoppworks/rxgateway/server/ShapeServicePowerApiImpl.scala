@@ -17,7 +17,7 @@ import com.yoppworks.rxgateway.utils.ChainingSyntax
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 
-case class ShapeServiceImpl()(implicit ec: ExecutionContext, system: ActorSystem)
+case class ShapeServicePowerApiImpl()(implicit ec: ExecutionContext, system: ActorSystem)
   extends ShapeServicePowerApi with RegularShapeGenerator with TetrisShapeGenerator with ChainingSyntax {
   private type Message = String
 
